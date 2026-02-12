@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from "react";
 import {
   Card,
   Typography,
@@ -9,13 +9,17 @@ import {
   Collapse,
   message,
   Segmented,
-} from 'antd';
-import { StarFilled } from '@ant-design/icons';
-import { subscribeToSquads, rateSquad, getUserVote } from '../firebase/squadService';
-import { POSITION_COLORS, POSITION_LABELS } from '../types';
-import type { SavedSquad, PlayerInfo, Position } from '../types';
+} from "antd";
+import { StarFilled } from "@ant-design/icons";
+import {
+  subscribeToSquads,
+  rateSquad,
+  getUserVote,
+} from "../firebase/squadService";
+import { POSITION_COLORS, POSITION_LABELS } from "../types";
+import type { SavedSquad, PlayerInfo } from "../types";
 
-const { Text, Title } = Typography;
+const { Text } = Typography;
 
 function TeamMini({ team, label }: { team: PlayerInfo[]; label: string }) {
   return (
@@ -31,7 +35,7 @@ function TeamMini({ team, label }: { team: PlayerInfo[]; label: string }) {
             style={{ fontSize: 11, margin: 2 }}
           >
             {p.name}
-            {p.position ? ` (${POSITION_LABELS[p.position]})` : ''}
+            {p.position ? ` (${POSITION_LABELS[p.position]})` : ""}
           </Tag>
         ))}
       </div>
@@ -58,7 +62,7 @@ function SquadCard({ squad }: { squad: SavedSquad }) {
       await rateSquad(squad.id, value);
       setMyVote(value);
     } catch {
-      message.error('Puanlama başarısız!');
+      message.error("Puanlama başarısız!");
     }
     setLoading(false);
   };
@@ -68,15 +72,15 @@ function SquadCard({ squad }: { squad: SavedSquad }) {
       <div className="squad-card__header">
         <div className="squad-card__vs">
           <Text strong>{squad.hostName}</Text>
-          <Text type="secondary" style={{ margin: '0 6px', fontSize: 12 }}>
+          <Text type="secondary" style={{ margin: "0 6px", fontSize: 12 }}>
             vs
           </Text>
           <Text strong>{squad.guestName}</Text>
         </div>
         <Space size={4}>
-          <StarFilled style={{ color: '#faad14', fontSize: 14 }} />
-          <Text strong style={{ color: '#faad14' }}>
-            {avg || '—'}
+          <StarFilled style={{ color: "#faad14", fontSize: 14 }} />
+          <Text strong style={{ color: "#faad14" }}>
+            {avg || "—"}
           </Text>
           <Text type="secondary" style={{ fontSize: 11 }}>
             ({squad.ratingCount})
@@ -89,7 +93,7 @@ function SquadCard({ squad }: { squad: SavedSquad }) {
         size="small"
         items={[
           {
-            key: '1',
+            key: "1",
             label: (
               <Text type="secondary" style={{ fontSize: 12 }}>
                 Kadroları Gör
@@ -122,7 +126,7 @@ function SquadCard({ squad }: { squad: SavedSquad }) {
 
 export default function SavedSquads() {
   const [squads, setSquads] = useState<SavedSquad[]>([]);
-  const [sort, setSort] = useState<string>('rating');
+  const [sort, setSort] = useState<string>("rating");
 
   useEffect(() => {
     const unsub = subscribeToSquads(setSquads);
@@ -135,12 +139,12 @@ export default function SavedSquads() {
   };
 
   const sorted = [...squads].sort((a, b) => {
-    if (sort === 'rating') {
+    if (sort === "rating") {
       const avgA = a.ratingCount > 0 ? a.totalRating / a.ratingCount : 0;
       const avgB = b.ratingCount > 0 ? b.totalRating / b.ratingCount : 0;
       return avgB - avgA;
     }
-    if (sort === 'newest') {
+    if (sort === "newest") {
       return getTime(b) - getTime(a);
     }
     return 0;
@@ -154,8 +158,8 @@ export default function SavedSquads() {
           value={sort}
           onChange={(v) => setSort(v as string)}
           options={[
-            { label: 'En Beğenilen', value: 'rating' },
-            { label: 'En Yeni', value: 'newest' },
+            { label: "En Beğenilen", value: "rating" },
+            { label: "En Yeni", value: "newest" },
           ]}
         />
       </div>
