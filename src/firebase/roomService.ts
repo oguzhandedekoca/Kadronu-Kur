@@ -3,6 +3,7 @@ import {
   setDoc,
   updateDoc,
   getDoc,
+  deleteDoc,
   onSnapshot,
   runTransaction,
   serverTimestamp,
@@ -54,6 +55,11 @@ export async function joinRoom(
 export async function roomExists(roomId: string): Promise<boolean> {
   const snap = await getDoc(roomRef(roomId));
   return snap.exists();
+}
+
+/** Delete a room (e.g. admin only) */
+export async function deleteRoom(roomId: string): Promise<void> {
+  await deleteDoc(roomRef(roomId));
 }
 
 // --------------- Real-time ---------------

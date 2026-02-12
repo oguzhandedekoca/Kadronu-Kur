@@ -53,7 +53,21 @@ export function subscribeToSquads(
 ): () => void {
   const q = query(collection(db, 'squads'));
   return onSnapshot(q, (snap) => {
-    const squads = snap.docs.map((d) => d.data() as SavedSquad);
+    const squads = snap.docs.map((d) => {
+      const data = d.data();
+      return {
+        ...data,
+        id: data.id ?? d.id,
+        roomId: data.roomId ?? d.id,
+        hostName: data.hostName ?? '',
+        guestName: data.guestName ?? '',
+        hostTeam: Array.isArray(data.hostTeam) ? data.hostTeam : [],
+        guestTeam: Array.isArray(data.guestTeam) ? data.guestTeam : [],
+        totalRating: typeof data.totalRating === 'number' ? data.totalRating : 0,
+        ratingCount: typeof data.ratingCount === 'number' ? data.ratingCount : 0,
+        createdAt: data.createdAt,
+      } as SavedSquad;
+    });
     callback(squads);
   });
 }

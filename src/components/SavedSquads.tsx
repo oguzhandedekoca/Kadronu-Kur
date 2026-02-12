@@ -129,13 +129,21 @@ export default function SavedSquads() {
     return () => unsub();
   }, []);
 
+  const getTime = (s: SavedSquad) => {
+    const t = s.createdAt as { toMillis?: () => number } | null | undefined;
+    return t?.toMillis?.() ?? 0;
+  };
+
   const sorted = [...squads].sort((a, b) => {
     if (sort === 'rating') {
       const avgA = a.ratingCount > 0 ? a.totalRating / a.ratingCount : 0;
       const avgB = b.ratingCount > 0 ? b.totalRating / b.ratingCount : 0;
       return avgB - avgA;
     }
-    return 0; // Firestore default order
+    if (sort === 'newest') {
+      return getTime(b) - getTime(a);
+    }
+    return 0;
   });
 
   return (

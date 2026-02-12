@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Card, Typography, Button, Empty, Space, message, Tag } from 'antd';
-import { UserOutlined, LoginOutlined } from '@ant-design/icons';
-import { subscribeToPublicRooms, sendJoinRequest } from '../firebase/roomService';
+import { Card, Typography, Button, Empty, Space, message, Tag, Popconfirm } from 'antd';
+import { UserOutlined, LoginOutlined, DeleteOutlined } from '@ant-design/icons';
+import { subscribeToPublicRooms, sendJoinRequest, deleteRoom } from '../firebase/roomService';
 import type { GameState } from '../types';
 
 const { Text } = Typography;
+
+const ADMIN_NAME = 'OguzhanDedekoca';
 
 interface Props {
   playerName: string;
@@ -14,7 +16,9 @@ interface Props {
 export default function PublicRooms({ playerName }: Props) {
   const [rooms, setRooms] = useState<GameState[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState<string | null>(null);
   const navigate = useNavigate();
+  const isAdmin = playerName.trim() === ADMIN_NAME;
 
   useEffect(() => {
     const unsub = subscribeToPublicRooms(setRooms);
@@ -47,6 +51,18 @@ export default function PublicRooms({ playerName }: Props) {
     setBusy(null);
   };
 
+  const handleDelete = async (roomId: string) => {
+    if (!isAdmin) return;
+    setDeleting(roomId);
+    try {
+      await deleteRoom(roomId);
+      message.success('Oda silindi.');
+    } catch {
+      message.error('Silinemedi!');
+    }
+    setDeleting(null);
+  };
+
   if (rooms.length === 0) {
     return (
       <Empty
@@ -71,15 +87,36 @@ export default function PublicRooms({ playerName }: Props) {
                 Kod: {room.roomId}
               </Text>
             </div>
-            <Button
-              type="primary"
-              icon={<LoginOutlined />}
-              onClick={() => handleJoin(room)}
-              loading={busy === room.roomId}
-              size="small"
-            >
-              Katıl
-            </Button>
+            <Space>
+              <Button
+                type="primary"
+                icon={<LoginOutlined />}
+                onClick={() => handleJoin(room)}
+                loading={busy === room.roomId}
+                size="small"
+              >
+                Katıl
+              </Button>
+              {isAdmin && (
+                <Popconfirm
+                  title="Odayı sil"
+                  description="Bu oda kalıcı olarak silinecek. Emin misin?"
+                  onConfirm={() => handleDelete(room.roomId)}
+                  okText="Sil"
+                  cancelText="İptal"
+                  okButtonProps={{ danger: true }}
+                >
+                  <Button
+                    danger
+                    icon={<DeleteOutlined />}
+                    loading={deleting === room.roomId}
+                    size="small"
+                  >
+                    Sil
+                  </Button>
+                </Popconfirm>
+              )}
+            </Space>
           </div>
         </Card>
       ))}

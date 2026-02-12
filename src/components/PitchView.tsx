@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import { POSITION_COLORS } from '../types';
 import type { PlayerInfo, Position } from '../types';
 
@@ -8,42 +9,52 @@ interface Props {
   guestName: string;
 }
 
-/**
- * Place players in rows based on their position.
- * For 7-a-side: GK (1) — DEF row — MID row — FWD row
- * Players without position go into MID.
- * Captain (index 0) is displayed but marked.
- */
-function arrangeRows(team: PlayerInfo[]): {
-  gk: PlayerInfo[];
-  def: PlayerInfo[];
-  mid: PlayerInfo[];
-  fwd: PlayerInfo[];
-} {
-  const gk: PlayerInfo[] = [];
-  const def: PlayerInfo[] = [];
-  const mid: PlayerInfo[] = [];
-  const fwd: PlayerInfo[] = [];
+/** Formation: 1 GK, 2 DEF, 3 MID, 1 FWD. Fill remaining with no-position players (shuffled). */
+const SLOTS: { position: Position; count: number }[] = [
+  { position: 'GK', count: 1 },
+  { position: 'DEF', count: 2 },
+  { position: 'MID', count: 3 },
+  { position: 'FWD', count: 1 },
+];
 
+function shuffle<T>(arr: T[]): T[] {
+  const out = [...arr];
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+/**
+ * Assign 7 players to rows: [GK], [DEF, DEF], [MID, MID, MID], [FWD].
+ * Players with position go to their row; rest fill empty slots randomly.
+ */
+function buildFormation(team: PlayerInfo[]): PlayerInfo[][] {
+  const rows: PlayerInfo[][] = [[], [], [], []]; // GK, DEF, MID, FWD
+
+  const byPos: Record<string, PlayerInfo[]> = { GK: [], DEF: [], MID: [], FWD: [], '': [] };
   team.forEach((p) => {
-    switch (p.position) {
-      case 'GK':
-        gk.push(p);
-        break;
-      case 'DEF':
-        def.push(p);
-        break;
-      case 'FWD':
-        fwd.push(p);
-        break;
-      case 'MID':
-      default:
-        mid.push(p);
-        break;
+    const key = p.position || '';
+    if (!byPos[key]) byPos[key] = [];
+    byPos[key].push(p);
+  });
+
+  const noPosition = shuffle(byPos[''] ?? []);
+  let noIdx = 0;
+
+  SLOTS.forEach((slot, rowIndex) => {
+    const available = byPos[slot.position] ?? [];
+    for (let i = 0; i < slot.count; i++) {
+      if (available[i]) {
+        rows[rowIndex].push(available[i]);
+      } else if (noPosition[noIdx] !== undefined) {
+        rows[rowIndex].push(noPosition[noIdx++]);
+      }
     }
   });
 
-  return { gk, def, mid, fwd };
+  return rows;
 }
 
 function PlayerDot({
@@ -83,23 +94,24 @@ function HalfPitch({
   name: string;
   side: 'host' | 'guest';
 }) {
-  const { gk, def, mid, fwd } = arrangeRows(team);
-  const isHost = side === 'host';
+  const teamKey = team.map((p) => p.id).sort().join(',');
+  const rows = useMemo(() => buildFormation(team), [teamKey]);
+  const captainId = team[0]?.id;
 
-  // For host: GK at bottom (near own goal), FWD at top (near center)
-  // For guest: GK at top, FWD at bottom (mirrored)
-  const rows = isHost ? [fwd, mid, def, gk] : [gk, def, mid, fwd];
+  // Host half: bottom = own goal → show GK row at bottom → order [3,2,1,0] (FWD top, GK bottom)
+  // Guest half: top = own goal → show GK row at top → order [0,1,2,3]
+  const rowOrder = side === 'host' ? [3, 2, 1, 0] : [0, 1, 2, 3];
 
   return (
     <div className={`pitch-half pitch-half--${side}`}>
       <div className="pitch-half__label">{name}</div>
-      {rows.map((row, ri) => (
-        <div key={ri} className="pitch-row">
-          {row.map((p) => (
+      {rowOrder.map((rowIndex) => (
+        <div key={rowIndex} className="pitch-row">
+          {rows[rowIndex]?.map((p) => (
             <PlayerDot
               key={p.id}
               player={p}
-              isCaptain={p.id === team[0]?.id}
+              isCaptain={p.id === captainId}
               side={side}
             />
           ))}
@@ -119,14 +131,10 @@ export default function PitchView({
     <div className="pitch-container">
       <div className="pitch">
         <div className="pitch__field">
-          {/* Center line */}
           <div className="pitch__center-line" />
           <div className="pitch__center-circle" />
 
-          {/* Host half (bottom) */}
           <HalfPitch team={hostTeam} name={hostName} side="host" />
-
-          {/* Guest half (top) */}
           <HalfPitch team={guestTeam} name={guestName} side="guest" />
         </div>
       </div>

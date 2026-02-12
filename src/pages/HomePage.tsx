@@ -83,7 +83,7 @@ export default function HomePage() {
             KADRONU KUR
           </Title>
           <Text className="home-hero__subtitle">
-            Adam alış ve en iyi kadroyu sen kur!
+            Adam Alış ve En İyi Kadroyu Sen Kur!
           </Text>
         </div>
 
@@ -194,7 +194,7 @@ export default function HomePage() {
         </div>
 
         <Text className="home-footer">
-          Halısaha & spor karşılaşmaları için kadro seçim uygulaması
+          Halısaha & Spor Karşılaşmaları İçin Kadro Seçim Uygulaması
         </Text>
       </div>
     </div>
