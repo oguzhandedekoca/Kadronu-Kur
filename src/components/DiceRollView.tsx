@@ -1,47 +1,57 @@
 import { useState, useCallback } from 'react';
-import { Button, Typography } from 'antd';
+import { Button, Typography, message } from 'antd';
 import { useGame } from '../context/GameContext';
 import Dice from './Dice';
 
 const { Title, Text } = Typography;
 
 export default function DiceRollView() {
-  const { gameState, setDice, resetDice, startDraft } = useGame();
-  const [hostRolling, setHostRolling] = useState(false);
-  const [guestRolling, setGuestRolling] = useState(false);
+  const { gameState, role, rollDice, resetDice, startDraft } = useGame();
+  const [rolling, setRolling] = useState(false);
 
   if (!gameState) return null;
 
-  const handleRoll = useCallback(
-    (who: 'host' | 'guest') => {
-      const value = Math.floor(Math.random() * 6) + 1;
-
-      if (who === 'host') {
-        setHostRolling(true);
-        setTimeout(() => {
-          setHostRolling(false);
-          setDice('host', value);
-        }, 2000);
-      } else {
-        setGuestRolling(true);
-        setTimeout(() => {
-          setGuestRolling(false);
-          setDice('guest', value);
-        }, 2000);
+  const handleRoll = useCallback(async () => {
+    if (!role) return;
+    const value = Math.floor(Math.random() * 6) + 1;
+    setRolling(true);
+    // show animation, then commit to Firestore
+    setTimeout(async () => {
+      setRolling(false);
+      try {
+        await rollDice(value);
+      } catch {
+        message.error('Zar atılamadı!');
       }
-    },
-    [setDice],
-  );
+    }, 2000);
+  }, [role, rollDice]);
 
-  const handleReRoll = () => {
-    resetDice();
+  const handleReRoll = async () => {
+    try {
+      await resetDice();
+    } catch {
+      message.error('Hata!');
+    }
+  };
+
+  const handleStartDraft = async () => {
+    try {
+      await startDraft();
+    } catch {
+      message.error('Hata!');
+    }
   };
 
   const bothRolled =
     gameState.hostDice !== null && gameState.guestDice !== null;
-  const isTie =
-    bothRolled && gameState.hostDice === gameState.guestDice;
+  const isTie = bothRolled && gameState.hostDice === gameState.guestDice;
   const winner = gameState.firstPicker;
+
+  // What can the current user do?
+  const myDice = role === 'host' ? gameState.hostDice : gameState.guestDice;
+  const canRoll = myDice === null && !rolling;
+  const isHostRolling = role === 'host' && rolling;
+  const isGuestRolling = role === 'guest' && rolling;
 
   return (
     <div className="dice-roll-view">
@@ -62,24 +72,30 @@ export default function DiceRollView() {
             {gameState.host.name}
           </Title>
           <div className="dice-wrapper">
-            <Dice value={gameState.hostDice} rolling={hostRolling} size={130} />
+            <Dice
+              value={gameState.hostDice}
+              rolling={isHostRolling}
+              size={130}
+            />
           </div>
-          {gameState.hostDice === null && !hostRolling && (
+          {role === 'host' && canRoll && (
             <Button
               type="primary"
               size="large"
-              onClick={() => handleRoll('host')}
+              onClick={handleRoll}
               className="roll-btn"
             >
               Zar At!
             </Button>
           )}
-          {gameState.hostDice !== null && !hostRolling && (
+          {gameState.hostDice !== null && !isHostRolling && (
             <div className="dice-value">{gameState.hostDice}</div>
+          )}
+          {role !== 'host' && gameState.hostDice === null && !isHostRolling && (
+            <Text type="secondary">Zar bekleniyor...</Text>
           )}
         </div>
 
-        {/* VS */}
         <div className="dice-vs">
           <span className="dice-vs__text">VS</span>
         </div>
@@ -92,23 +108,28 @@ export default function DiceRollView() {
           <div className="dice-wrapper">
             <Dice
               value={gameState.guestDice}
-              rolling={guestRolling}
+              rolling={isGuestRolling}
               size={130}
             />
           </div>
-          {gameState.guestDice === null && !guestRolling && (
+          {role === 'guest' && canRoll && (
             <Button
               type="primary"
               size="large"
-              onClick={() => handleRoll('guest')}
+              onClick={handleRoll}
               className="roll-btn"
             >
               Zar At!
             </Button>
           )}
-          {gameState.guestDice !== null && !guestRolling && (
+          {gameState.guestDice !== null && !isGuestRolling && (
             <div className="dice-value">{gameState.guestDice}</div>
           )}
+          {role !== 'guest' &&
+            gameState.guestDice === null &&
+            !isGuestRolling && (
+              <Text type="secondary">Zar bekleniyor...</Text>
+            )}
         </div>
       </div>
 
@@ -125,7 +146,7 @@ export default function DiceRollView() {
           <Button
             type="primary"
             size="large"
-            onClick={startDraft}
+            onClick={handleStartDraft}
             className="glow-btn"
             style={{ marginTop: 16 }}
           >

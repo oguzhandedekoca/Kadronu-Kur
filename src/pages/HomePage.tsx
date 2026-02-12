@@ -1,11 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Input, Button, Card, Typography, Space, Divider, message } from 'antd';
-import {
-  PlusOutlined,
-  LoginOutlined,
-  TeamOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined, LoginOutlined, TeamOutlined } from '@ant-design/icons';
 import { useGame } from '../context/GameContext';
 
 const { Title, Text } = Typography;
@@ -14,19 +10,27 @@ export default function HomePage() {
   const [name, setName] = useState('');
   const [roomCode, setRoomCode] = useState('');
   const [joining, setJoining] = useState(false);
-  const { createRoom } = useGame();
+  const [busy, setBusy] = useState(false);
+  const { createRoom, joinRoom } = useGame();
   const navigate = useNavigate();
 
-  const handleCreate = () => {
+  const handleCreate = async () => {
     if (!name.trim()) {
       message.warning('Lütfen adını gir!');
       return;
     }
-    const roomId = createRoom(name.trim());
-    navigate(`/room/${roomId}`);
+    setBusy(true);
+    try {
+      const roomId = await createRoom(name.trim());
+      navigate(`/room/${roomId}`);
+    } catch {
+      message.error('Oda oluşturulamadı! Firebase bağlantısını kontrol et.');
+    } finally {
+      setBusy(false);
+    }
   };
 
-  const handleJoin = () => {
+  const handleJoin = async () => {
     if (!name.trim()) {
       message.warning('Lütfen adını gir!');
       return;
@@ -35,15 +39,25 @@ export default function HomePage() {
       message.warning('Oda kodunu gir!');
       return;
     }
-    // In Firebase version, this will actually join the room
-    // For now, navigate to room (host simulates the guest)
-    navigate(`/room/${roomCode.trim().toUpperCase()}`);
+    const code = roomCode.trim().toUpperCase();
+    setBusy(true);
+    try {
+      const ok = await joinRoom(code, name.trim());
+      if (ok) {
+        navigate(`/room/${code}`);
+      } else {
+        message.error('Oda bulunamadı veya dolu!');
+      }
+    } catch {
+      message.error('Bağlantı hatası!');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
     <div className="home-page">
       <div className="home-content">
-        {/* Logo */}
         <div className="home-hero">
           <div className="home-hero__ball">⚽</div>
           <Title level={1} className="home-hero__title">
@@ -54,7 +68,6 @@ export default function HomePage() {
           </Text>
         </div>
 
-        {/* Form */}
         <Card className="glass-card home-card">
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
@@ -72,6 +85,7 @@ export default function HomePage() {
                 onChange={(e) => setName(e.target.value)}
                 maxLength={20}
                 onPressEnter={handleCreate}
+                disabled={busy}
               />
             </div>
 
@@ -81,12 +95,15 @@ export default function HomePage() {
               icon={<PlusOutlined />}
               block
               onClick={handleCreate}
+              loading={busy && !joining}
               className="glow-btn"
             >
               Oda Oluştur
             </Button>
 
-            <Divider style={{ margin: 0, borderColor: 'rgba(255,255,255,0.1)' }}>
+            <Divider
+              style={{ margin: 0, borderColor: 'rgba(255,255,255,0.1)' }}
+            >
               veya
             </Divider>
 
@@ -105,17 +122,17 @@ export default function HomePage() {
                   size="large"
                   placeholder="Oda Kodu"
                   value={roomCode}
-                  onChange={(e) =>
-                    setRoomCode(e.target.value.toUpperCase())
-                  }
+                  onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                   maxLength={6}
                   style={{ textTransform: 'uppercase', letterSpacing: '0.15em' }}
                   onPressEnter={handleJoin}
+                  disabled={busy}
                 />
                 <Button
                   type="primary"
                   size="large"
                   onClick={handleJoin}
+                  loading={busy}
                   icon={<LoginOutlined />}
                 >
                   Katıl

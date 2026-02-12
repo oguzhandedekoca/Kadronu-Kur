@@ -12,11 +12,7 @@ import {
   Tooltip,
   Tag,
 } from 'antd';
-import {
-  PlusOutlined,
-  CopyOutlined,
-  UserOutlined,
-} from '@ant-design/icons';
+import { PlusOutlined, CopyOutlined, UserOutlined } from '@ant-design/icons';
 import { useGame } from '../context/GameContext';
 import type { Position } from '../types';
 import { POSITION_LABELS } from '../types';
@@ -25,44 +21,50 @@ import PlayerCard from './PlayerCard';
 const { Title, Text } = Typography;
 
 export default function LobbyView() {
-  const { gameState, addPlayer, removePlayer, startRolling, joinRoom } =
-    useGame();
+  const { gameState, addPlayer, removePlayer, startRolling } = useGame();
   const [playerName, setPlayerName] = useState('');
   const [position, setPosition] = useState<Position>('');
-  const [guestName, setGuestName] = useState('');
+  const [adding, setAdding] = useState(false);
 
   if (!gameState) return null;
 
   const isWaiting = gameState.status === 'waiting';
 
-  const handleCopyCode = () => {
-    navigator.clipboard.writeText(gameState.roomId);
-    message.success('Oda kodu kopyalandı!');
+  const handleCopyLink = () => {
+    const url = `${window.location.origin}/room/${gameState.roomId}`;
+    navigator.clipboard.writeText(url);
+    message.success('Oda linki kopyalandı!');
   };
 
-  const handleAddPlayer = () => {
+  const handleAddPlayer = async () => {
     if (!playerName.trim()) {
       message.warning('Oyuncu adı gir!');
       return;
     }
-    addPlayer(playerName.trim(), position);
-    setPlayerName('');
-    setPosition('');
+    setAdding(true);
+    try {
+      await addPlayer(playerName.trim(), position);
+      setPlayerName('');
+      setPosition('');
+    } catch {
+      message.error('Oyuncu eklenemedi!');
+    }
+    setAdding(false);
   };
 
-  const handleSimulateJoin = () => {
-    if (!guestName.trim()) {
-      message.warning('Rakip adını gir!');
-      return;
+  const handleStartRolling = async () => {
+    try {
+      await startRolling();
+    } catch {
+      message.error('Bir hata oluştu!');
     }
-    joinRoom(gameState.roomId, guestName.trim());
   };
 
   const canProceed = gameState.guest && gameState.players.length >= 2;
 
   return (
     <div className="lobby-view">
-      {/* Room Code */}
+      {/* Room Code / Link */}
       <Card className="glass-card room-code-card">
         <div className="room-code-banner">
           <Text type="secondary">Oda Kodu</Text>
@@ -70,16 +72,18 @@ export default function LobbyView() {
             <Title level={2} style={{ margin: 0, letterSpacing: '0.3em' }}>
               {gameState.roomId}
             </Title>
-            <Tooltip title="Kopyala">
+            <Tooltip title="Linki Kopyala">
               <Button
                 icon={<CopyOutlined />}
-                onClick={handleCopyCode}
+                onClick={handleCopyLink}
                 type="text"
                 size="large"
               />
             </Tooltip>
           </div>
-          <Text type="secondary">Bu kodu rakibinle paylaş!</Text>
+          <Text type="secondary">
+            Linki rakibinle paylaş veya kodu gönder!
+          </Text>
         </div>
       </Card>
 
@@ -110,27 +114,16 @@ export default function LobbyView() {
         </Card>
       </div>
 
-      {/* Simulate Join (testing only) */}
+      {/* Waiting for opponent */}
       {isWaiting && (
-        <Card className="glass-card simulate-card">
-          <Text type="secondary" style={{ display: 'block', marginBottom: 8 }}>
-            Rakip katılımını simüle et
+        <Card className="glass-card" style={{ textAlign: 'center' }}>
+          <Text type="secondary">
+            Rakibinin katılmasını bekliyorsun... Linki paylaş!
           </Text>
-          <Space.Compact style={{ width: '100%' }}>
-            <Input
-              placeholder="Rakip adı"
-              value={guestName}
-              onChange={(e) => setGuestName(e.target.value)}
-              onPressEnter={handleSimulateJoin}
-            />
-            <Button type="primary" onClick={handleSimulateJoin}>
-              Katıl
-            </Button>
-          </Space.Compact>
         </Card>
       )}
 
-      {/* Add Players */}
+      {/* Add players phase */}
       {!isWaiting && (
         <>
           <Card className="glass-card add-player-card">
@@ -144,6 +137,7 @@ export default function LobbyView() {
                 onChange={(e) => setPlayerName(e.target.value)}
                 onPressEnter={handleAddPlayer}
                 className="add-player-input"
+                disabled={adding}
               />
               <Select
                 placeholder="Mevki"
@@ -162,13 +156,14 @@ export default function LobbyView() {
                 type="primary"
                 icon={<PlusOutlined />}
                 onClick={handleAddPlayer}
+                loading={adding}
               >
                 Ekle
               </Button>
             </div>
           </Card>
 
-          {/* Pool */}
+          {/* Player pool */}
           <div className="player-pool">
             {gameState.players.length === 0 ? (
               <Empty
@@ -189,13 +184,13 @@ export default function LobbyView() {
             )}
           </div>
 
-          {/* Start */}
+          {/* Proceed */}
           <div className="lobby-actions">
             <Button
               type="primary"
               size="large"
               disabled={!canProceed}
-              onClick={startRolling}
+              onClick={handleStartRolling}
               className="glow-btn"
             >
               🎲 Zar Atışına Geç ({gameState.players.length} oyuncu)

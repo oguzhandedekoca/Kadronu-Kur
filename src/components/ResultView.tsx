@@ -23,7 +23,7 @@ function PositionSummary({ team }: { team: PlayerInfo[] }) {
           color={POSITION_COLORS[pos as Position]}
           style={{ fontSize: 11 }}
         >
-          {POSITION_LABELS[pos as Position]} ×{count}
+          {POSITION_LABELS[pos as Position]} x{count}
         </Tag>
       ))}
     </Space>

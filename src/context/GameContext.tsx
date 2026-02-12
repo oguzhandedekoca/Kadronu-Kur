@@ -1,189 +1,211 @@
-import { createContext, useContext, useState, useCallback } from 'react';
-import type { GameState, PlayerInfo, PlayerRole, Position } from '../types';
+import {
+  createContext,
+  useContext,
+  useState,
+  useCallback,
+  useRef,
+} from 'react';
+import type { GameState, PlayerRole, Position } from '../types';
+import * as svc from '../firebase/roomService';
 
+/* -------------------------------------------------- */
+/*  Types                                              */
+/* -------------------------------------------------- */
 interface GameContextType {
+  /* identity */
+  playerId: string | null;
   playerName: string;
-  setPlayerName: (name: string) => void;
   role: PlayerRole | null;
+
+  /* state from Firestore */
   gameState: GameState | null;
-  createRoom: (hostName: string) => string;
-  joinRoom: (roomId: string, guestName: string) => boolean;
-  addPlayer: (name: string, position: Position) => void;
-  removePlayer: (playerId: string) => void;
-  startRolling: () => void;
-  setDice: (role: PlayerRole, value: number) => void;
-  resetDice: () => void;
-  startDraft: () => void;
-  pickPlayer: (playerId: string) => void;
+  loading: boolean;
+
+  /* room management */
+  createRoom: (hostName: string) => Promise<string>;
+  joinRoom: (roomId: string, guestName: string) => Promise<boolean>;
+  subscribeToRoom: (roomId: string) => () => void;
+
+  /* game actions — all write to Firestore */
+  addPlayer: (name: string, position: Position) => Promise<void>;
+  removePlayer: (id: string) => Promise<void>;
+  startRolling: () => Promise<void>;
+  rollDice: (value: number) => Promise<void>;
+  resetDice: () => Promise<void>;
+  startDraft: () => Promise<void>;
+  pickPlayer: (id: string) => Promise<void>;
   resetGame: () => void;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
 
-function generateRoomCode(): string {
+/* -------------------------------------------------- */
+/*  Helpers                                            */
+/* -------------------------------------------------- */
+function genRoomCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-  let result = '';
-  for (let i = 0; i < 6; i++) {
-    result += chars[Math.floor(Math.random() * chars.length)];
-  }
-  return result;
+  let r = '';
+  for (let i = 0; i < 6; i++) r += chars[Math.floor(Math.random() * chars.length)];
+  return r;
 }
 
-function generateId(): string {
+function genId(): string {
   return Math.random().toString(36).substring(2, 11);
 }
 
+/* per-room session in sessionStorage (tab-scoped) */
+function saveSession(roomId: string, pid: string, name: string) {
+  sessionStorage.setItem(`kk-${roomId}-pid`, pid);
+  sessionStorage.setItem(`kk-${roomId}-name`, name);
+}
+
+function getSession(roomId: string) {
+  const pid = sessionStorage.getItem(`kk-${roomId}-pid`);
+  const name = sessionStorage.getItem(`kk-${roomId}-name`);
+  return pid && name ? { playerId: pid, playerName: name } : null;
+}
+
+/* -------------------------------------------------- */
+/*  Provider                                           */
+/* -------------------------------------------------- */
 export function GameProvider({ children }: { children: React.ReactNode }) {
+  const [playerId, setPlayerId] = useState<string | null>(null);
   const [playerName, setPlayerName] = useState('');
   const [role, setRole] = useState<PlayerRole | null>(null);
   const [gameState, setGameState] = useState<GameState | null>(null);
+  const [loading, setLoading] = useState(false);
+  const unsubRef = useRef<(() => void) | null>(null);
 
-  const createRoom = useCallback((hostName: string): string => {
-    const roomId = generateRoomCode();
-    setRole('host');
+  /* ---------- room management ---------- */
+
+  const createRoom = useCallback(async (hostName: string): Promise<string> => {
+    const roomId = genRoomCode();
+    const id = genId();
+    await svc.createRoom(roomId, { name: hostName, id });
+    setPlayerId(id);
     setPlayerName(hostName);
-    setGameState({
-      roomId,
-      status: 'waiting',
-      host: { name: hostName, id: generateId() },
-      guest: null,
-      players: [],
-      hostDice: null,
-      guestDice: null,
-      currentTurn: 'host',
-      firstPicker: null,
-      hostTeam: [],
-      guestTeam: [],
-    });
+    setRole('host');
+    saveSession(roomId, id, hostName);
     return roomId;
   }, []);
 
-  const joinRoom = useCallback((_roomId: string, guestName: string): boolean => {
-    setRole('guest');
-    setPlayerName(guestName);
-    setGameState((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        guest: { name: guestName, id: generateId() },
-        status: 'adding_players',
-      };
-    });
-    return true;
-  }, []);
+  const joinRoom = useCallback(
+    async (roomId: string, guestName: string): Promise<boolean> => {
+      const id = genId();
+      const ok = await svc.joinRoom(roomId, { name: guestName, id });
+      if (!ok) return false;
+      setPlayerId(id);
+      setPlayerName(guestName);
+      setRole('guest');
+      saveSession(roomId, id, guestName);
+      // optimistic local update
+      setGameState((prev) =>
+        prev ? { ...prev, guest: { name: guestName, id }, status: 'adding_players' } : prev,
+      );
+      return true;
+    },
+    [],
+  );
 
-  const addPlayer = useCallback((name: string, position: Position) => {
-    setGameState((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        players: [...prev.players, { id: generateId(), name, position }],
-      };
-    });
-  }, []);
+  const subscribeToRoom = useCallback((roomId: string): (() => void) => {
+    if (unsubRef.current) unsubRef.current();
+    setLoading(true);
 
-  const removePlayer = useCallback((playerId: string) => {
-    setGameState((prev) => {
-      if (!prev) return prev;
-      return {
-        ...prev,
-        players: prev.players.filter((p) => p.id !== playerId),
-      };
-    });
-  }, []);
+    // try to restore identity from session
+    const session = getSession(roomId);
+    if (session) {
+      setPlayerId(session.playerId);
+      setPlayerName(session.playerName);
+    }
 
-  const startRolling = useCallback(() => {
-    setGameState((prev) => {
-      if (!prev) return prev;
-      return { ...prev, status: 'rolling', hostDice: null, guestDice: null, firstPicker: null };
-    });
-  }, []);
+    const unsub = svc.subscribeToRoom(roomId, (state) => {
+      setLoading(false);
+      setGameState(state);
 
-  const setDice = useCallback((diceRole: PlayerRole, value: number) => {
-    setGameState((prev) => {
-      if (!prev) return prev;
-      const updated = { ...prev };
-      if (diceRole === 'host') {
-        updated.hostDice = value;
-      } else {
-        updated.guestDice = value;
+      // determine role from latest session
+      const s = getSession(roomId);
+      if (s && state) {
+        if (state.host?.id === s.playerId) setRole('host');
+        else if (state.guest?.id === s.playerId) setRole('guest');
       }
-      if (updated.hostDice !== null && updated.guestDice !== null) {
-        if (updated.hostDice !== updated.guestDice) {
-          updated.firstPicker =
-            updated.hostDice > updated.guestDice ? 'host' : 'guest';
-          updated.currentTurn = updated.firstPicker;
-        }
-        // tie: firstPicker stays null, UI will prompt re-roll
-      }
-      return updated;
     });
+
+    unsubRef.current = unsub;
+    return unsub;
   }, []);
 
-  const resetDice = useCallback(() => {
-    setGameState((prev) => {
-      if (!prev) return prev;
-      return { ...prev, hostDice: null, guestDice: null, firstPicker: null };
-    });
-  }, []);
+  /* ---------- game actions ---------- */
 
-  const startDraft = useCallback(() => {
-    setGameState((prev) => {
-      if (!prev) return prev;
-      return { ...prev, status: 'drafting' };
-    });
-  }, []);
+  const addPlayer = useCallback(
+    async (name: string, position: Position) => {
+      if (!gameState) return;
+      await svc.addPlayer(gameState.roomId, { id: genId(), name, position });
+    },
+    [gameState],
+  );
 
-  const pickPlayer = useCallback((playerId: string) => {
-    setGameState((prev) => {
-      if (!prev) return prev;
-      const player = prev.players.find((p) => p.id === playerId);
-      if (!player) return prev;
+  const removePlayer = useCallback(
+    async (pid: string) => {
+      if (!gameState) return;
+      await svc.removePlayer(gameState.roomId, pid);
+    },
+    [gameState],
+  );
 
-      const newPlayers = prev.players.filter((p) => p.id !== playerId);
-      const newHostTeam =
-        prev.currentTurn === 'host'
-          ? [...prev.hostTeam, player]
-          : prev.hostTeam;
-      const newGuestTeam =
-        prev.currentTurn === 'guest'
-          ? [...prev.guestTeam, player]
-          : prev.guestTeam;
+  const startRolling = useCallback(async () => {
+    if (!gameState) return;
+    await svc.startRolling(gameState.roomId);
+  }, [gameState]);
 
-      const isCompleted = newPlayers.length === 0;
-      const newTurn: PlayerRole =
-        prev.currentTurn === 'host' ? 'guest' : 'host';
+  const rollDice = useCallback(
+    async (value: number) => {
+      if (!gameState || !role) return;
+      await svc.setDiceValue(gameState.roomId, role, value);
+    },
+    [gameState, role],
+  );
 
-      return {
-        ...prev,
-        players: newPlayers,
-        hostTeam: newHostTeam,
-        guestTeam: newGuestTeam,
-        currentTurn: isCompleted ? prev.currentTurn : newTurn,
-        status: isCompleted ? 'completed' : 'drafting',
-      };
-    });
-  }, []);
+  const resetDice = useCallback(async () => {
+    if (!gameState) return;
+    await svc.resetDice(gameState.roomId);
+  }, [gameState]);
+
+  const startDraft = useCallback(async () => {
+    if (!gameState) return;
+    await svc.startDraft(gameState.roomId);
+  }, [gameState]);
+
+  const pickPlayer = useCallback(
+    async (pid: string) => {
+      if (!gameState) return;
+      await svc.pickPlayer(gameState.roomId, pid);
+    },
+    [gameState],
+  );
 
   const resetGame = useCallback(() => {
+    if (unsubRef.current) unsubRef.current();
     setGameState(null);
     setRole(null);
+    setPlayerId(null);
     setPlayerName('');
   }, []);
 
   return (
     <GameContext.Provider
       value={{
+        playerId,
         playerName,
-        setPlayerName,
         role,
         gameState,
+        loading,
         createRoom,
         joinRoom,
+        subscribeToRoom,
         addPlayer,
         removePlayer,
         startRolling,
-        setDice,
+        rollDice,
         resetDice,
         startDraft,
         pickPlayer,

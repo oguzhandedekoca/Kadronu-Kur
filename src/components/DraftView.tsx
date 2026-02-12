@@ -1,13 +1,15 @@
-import { Typography, Badge, Empty } from 'antd';
+import { Typography, Badge, Empty, message } from 'antd';
 import { useGame } from '../context/GameContext';
 import PlayerCard from './PlayerCard';
 
 const { Title, Text } = Typography;
 
 export default function DraftView() {
-  const { gameState, pickPlayer } = useGame();
+  const { gameState, role, pickPlayer } = useGame();
 
   if (!gameState) return null;
+
+  const isMyTurn = gameState.currentTurn === role;
 
   const currentName =
     gameState.currentTurn === 'host'
@@ -16,6 +18,18 @@ export default function DraftView() {
 
   const totalPicked = gameState.hostTeam.length + gameState.guestTeam.length;
   const totalPlayers = totalPicked + gameState.players.length;
+
+  const handlePick = async (playerId: string) => {
+    if (!isMyTurn) {
+      message.warning('Sıra sende değil!');
+      return;
+    }
+    try {
+      await pickPlayer(playerId);
+    } catch {
+      message.error('Seçim yapılamadı!');
+    }
+  };
 
   return (
     <div className="draft-view">
@@ -26,7 +40,9 @@ export default function DraftView() {
             {gameState.currentTurn === 'host' ? '🟢' : '🔵'}
           </span>
           <Title level={3} style={{ margin: 0, color: '#fff' }}>
-            {currentName} seçiyor...
+            {isMyTurn
+              ? 'Senin sıran! Bir oyuncu seç.'
+              : `${currentName} seçiyor...`}
           </Title>
         </div>
         <Text style={{ color: 'rgba(255,255,255,0.7)' }}>
@@ -81,8 +97,8 @@ export default function DraftView() {
                 <PlayerCard
                   key={p.id}
                   player={p}
-                  selectable
-                  onClick={() => pickPlayer(p.id)}
+                  selectable={isMyTurn}
+                  onClick={() => handlePick(p.id)}
                 />
               ))}
             </div>

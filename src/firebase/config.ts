@@ -1,28 +1,16 @@
-// =====================================================
-// Firebase Configuration — Placeholder
-// =====================================================
-// Firebase entegrasyonu için bu dosyayı kullanacağız.
-// Şimdilik sadece yapı hazır, aktif bağlantı yok.
-//
-// Kurulum adımları:
-// 1. Firebase Console'dan yeni proje oluştur
-// 2. Aşağıdaki config değerlerini kendi projen ile değiştir
-// 3. `npm install firebase` (zaten yüklü olacak)
-// 4. Firestore Database oluştur (test mode)
-// =====================================================
+import { initializeApp } from 'firebase/app';
+import { getFirestore } from 'firebase/firestore';
 
-export const firebaseConfig = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_AUTH_DOMAIN',
-  projectId: 'YOUR_PROJECT_ID',
-  storageBucket: 'YOUR_STORAGE_BUCKET',
-  messagingSenderId: 'YOUR_MESSAGING_SENDER_ID',
-  appId: 'YOUR_APP_ID',
+const firebaseConfig = {
+  apiKey: 'AIzaSyDyJdJl7qfBhVXrQhlZdbVxjLYjGThOuQo',
+  authDomain: 'kadronu-kur.firebaseapp.com',
+  databaseURL: 'https://kadronu-kur-default-rtdb.firebaseio.com',
+  projectId: 'kadronu-kur',
+  storageBucket: 'kadronu-kur.firebasestorage.app',
+  messagingSenderId: '282630901925',
+  appId: '1:282630901925:web:56b5e6124b62249ca27d4c',
+  measurementId: 'G-T0BSB5H6HC',
 };
 
-// Firebase başlatma — config doldurulunca aktif edilecek
-// import { initializeApp } from 'firebase/app';
-// import { getFirestore } from 'firebase/firestore';
-//
-// const app = initializeApp(firebaseConfig);
-// export const db = getFirestore(app);
+const app = initializeApp(firebaseConfig);
+export const db = getFirestore(app);
