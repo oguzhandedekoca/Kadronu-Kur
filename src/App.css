@@ -244,6 +244,12 @@
   flex: 1;
   min-width: 160px;
 }
+.add-player-bulk {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  flex-wrap: wrap;
+}
 .player-pool {
   min-height: 80px;
 }

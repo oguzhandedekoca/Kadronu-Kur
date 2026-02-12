@@ -17,9 +17,6 @@ export const PLAYER_NAMES = [
   "Erdem",
   "Furkan",
   "Hakan",
-  "Devlet",
-  "Ümit",
-  "Emre",
 ] as const;
 
 export type PlayerName = (typeof PLAYER_NAMES)[number];

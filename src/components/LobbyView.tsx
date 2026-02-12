@@ -17,6 +17,8 @@ import {
   UserOutlined,
   CheckOutlined,
   CloseOutlined,
+  DeleteOutlined,
+  TeamOutlined,
 } from '@ant-design/icons';
 import { useGame } from '../context/GameContext';
 import type { Position } from '../types';
@@ -39,23 +41,27 @@ export default function LobbyView() {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [position, setPosition] = useState<Position>('');
   const [adding, setAdding] = useState(false);
-  const didAutoFillRef = useRef(false);
+  const [bulkLoading, setBulkLoading] = useState<'add' | 'remove' | null>(null);
+  const prevStatusRef = useRef<string | null>(null);
 
   if (!gameState) return null;
 
   const isWaiting = gameState.status === 'waiting';
 
-  /* Lobi açıldığında (adding_players) listedeki tüm oyuncuları otomatik ekle (bir kez) */
+  /* Sadece waiting → adding_players geçişinde (misafir katıldığında) tüm oyuncuları ekle.
+   * "Tümünü sil" sonrası liste boş kaldığında tekrar tetiklenmez. */
   useEffect(() => {
-    if (
-      role !== 'host' ||
-      gameState.status !== 'adding_players' ||
-      gameState.players.length > 0 ||
-      didAutoFillRef.current
-    ) {
-      return;
-    }
-    didAutoFillRef.current = true;
+    const prev = prevStatusRef.current;
+    prevStatusRef.current = gameState.status;
+
+    const justEnteredLobby =
+      role === 'host' &&
+      prev === 'waiting' &&
+      gameState.status === 'adding_players' &&
+      gameState.players.length === 0;
+
+    if (!justEnteredLobby) return;
+
     (async () => {
       for (const name of PLAYER_NAMES) {
         await addPlayer(name, '');
@@ -108,6 +114,43 @@ export default function LobbyView() {
     } catch {
       message.error('Hata!');
     }
+  };
+
+  const handleAddAll = async () => {
+    const toAdd = PLAYER_NAMES.filter(
+      (name) => !gameState.players.some((p) => p.name === name),
+    );
+    if (toAdd.length === 0) {
+      message.info('Zaten hepsi listede.');
+      return;
+    }
+    setBulkLoading('add');
+    try {
+      for (const name of toAdd) {
+        await addPlayer(name, '');
+      }
+      message.success(`${toAdd.length} oyuncu eklendi.`);
+    } catch {
+      message.error('Eklenemedi!');
+    }
+    setBulkLoading(null);
+  };
+
+  const handleRemoveAll = async () => {
+    if (gameState.players.length === 0) {
+      message.info('Liste zaten boş.');
+      return;
+    }
+    setBulkLoading('remove');
+    try {
+      for (const p of [...gameState.players]) {
+        await removePlayer(p.id);
+      }
+      message.success('Tüm oyuncular silindi.');
+    } catch {
+      message.error('Silinemedi!');
+    }
+    setBulkLoading(null);
   };
 
   const canProceed = gameState.guest && gameState.players.length >= 2;
@@ -249,6 +292,25 @@ export default function LobbyView() {
                 loading={adding}
               >
                 Ekle
+              </Button>
+            </div>
+            <div className="add-player-bulk">
+              <Button
+                icon={<TeamOutlined />}
+                onClick={handleAddAll}
+                loading={bulkLoading === 'add'}
+                disabled={bulkLoading !== null || playerOptions.length === 0}
+              >
+                Tümünü ekle
+              </Button>
+              <Button
+                danger
+                icon={<DeleteOutlined />}
+                onClick={handleRemoveAll}
+                loading={bulkLoading === 'remove'}
+                disabled={bulkLoading !== null || gameState.players.length === 0}
+              >
+                Tümünü sil
               </Button>
             </div>
           </Card>
