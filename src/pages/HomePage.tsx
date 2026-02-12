@@ -1,8 +1,25 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Input, Button, Card, Typography, Space, Divider, message } from 'antd';
-import { PlusOutlined, LoginOutlined, TeamOutlined } from '@ant-design/icons';
+import {
+  Input,
+  Button,
+  Card,
+  Typography,
+  Space,
+  Divider,
+  message,
+  Tabs,
+} from 'antd';
+import {
+  PlusOutlined,
+  LoginOutlined,
+  TeamOutlined,
+  GlobalOutlined,
+  TrophyOutlined,
+} from '@ant-design/icons';
 import { useGame } from '../context/GameContext';
+import PublicRooms from '../components/PublicRooms';
+import SavedSquads from '../components/SavedSquads';
 
 const { Title, Text } = Typography;
 
@@ -58,7 +75,8 @@ export default function HomePage() {
 
   return (
     <div className="home-page">
-      <div className="home-content">
+      <div className="home-content" style={{ maxWidth: 520 }}>
+        {/* Hero */}
         <div className="home-hero">
           <div className="home-hero__ball">⚽</div>
           <Title level={1} className="home-hero__title">
@@ -69,6 +87,7 @@ export default function HomePage() {
           </Text>
         </div>
 
+        {/* Create / Join */}
         <Card className="glass-card home-card">
           <Space direction="vertical" size="large" style={{ width: '100%' }}>
             <div>
@@ -115,7 +134,7 @@ export default function HomePage() {
                 block
                 onClick={() => setJoining(true)}
               >
-                Odaya Katıl
+                Kod ile Katıl
               </Button>
             ) : (
               <Space.Compact style={{ width: '100%' }}>
@@ -125,7 +144,10 @@ export default function HomePage() {
                   value={roomCode}
                   onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                   maxLength={6}
-                  style={{ textTransform: 'uppercase', letterSpacing: '0.15em' }}
+                  style={{
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.15em',
+                  }}
                   onPressEnter={handleJoin}
                   disabled={busy}
                 />
@@ -142,6 +164,34 @@ export default function HomePage() {
             )}
           </Space>
         </Card>
+
+        {/* Tabs: Public Rooms + Community Squads */}
+        <div className="home-tabs">
+          <Tabs
+            defaultActiveKey="rooms"
+            centered
+            items={[
+              {
+                key: 'rooms',
+                label: (
+                  <span>
+                    <GlobalOutlined /> Açık Odalar
+                  </span>
+                ),
+                children: <PublicRooms playerName={name} />,
+              },
+              {
+                key: 'squads',
+                label: (
+                  <span>
+                    <TrophyOutlined /> Topluluk Kadroları
+                  </span>
+                ),
+                children: <SavedSquads />,
+              },
+            ]}
+          />
+        </div>
 
         <Text className="home-footer">
           Halısaha & spor karşılaşmaları için kadro seçim uygulaması

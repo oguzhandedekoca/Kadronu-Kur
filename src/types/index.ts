@@ -20,6 +20,12 @@ export interface GamePlayer {
   id: string;
 }
 
+export interface JoinRequest {
+  name: string;
+  id: string;
+  status: 'pending' | 'approved' | 'denied';
+}
+
 export interface GameState {
   roomId: string;
   status: GameStatus;
@@ -32,6 +38,20 @@ export interface GameState {
   firstPicker: PlayerRole | null;
   hostTeam: PlayerInfo[];
   guestTeam: PlayerInfo[];
+  joinRequest?: JoinRequest | null;
+  squadSaved?: boolean;
+}
+
+export interface SavedSquad {
+  id: string;
+  roomId: string;
+  hostName: string;
+  guestName: string;
+  hostTeam: PlayerInfo[];
+  guestTeam: PlayerInfo[];
+  createdAt: unknown;
+  totalRating: number;
+  ratingCount: number;
 }
 
 export const POSITION_COLORS: Record<Position, string> = {

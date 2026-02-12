@@ -35,6 +35,10 @@ interface GameContextType {
   startDraft: () => Promise<void>;
   pickPlayer: (id: string) => Promise<void>;
   resetGame: () => void;
+
+  /* join request actions */
+  approveJoinRequest: () => Promise<void>;
+  denyJoinRequest: () => Promise<void>;
 }
 
 const GameContext = createContext<GameContextType | null>(null);
@@ -191,6 +195,18 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     setPlayerName('');
   }, []);
 
+  /* ---------- join request actions ---------- */
+
+  const approveJoinRequest = useCallback(async () => {
+    if (!gameState) return;
+    await svc.approveJoinRequest(gameState.roomId);
+  }, [gameState]);
+
+  const denyJoinRequest = useCallback(async () => {
+    if (!gameState) return;
+    await svc.denyJoinRequest(gameState.roomId);
+  }, [gameState]);
+
   return (
     <GameContext.Provider
       value={{
@@ -210,6 +226,8 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         startDraft,
         pickPlayer,
         resetGame,
+        approveJoinRequest,
+        denyJoinRequest,
       }}
     >
       {children}

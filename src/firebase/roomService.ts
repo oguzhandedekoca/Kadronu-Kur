@@ -6,6 +6,9 @@ import {
   onSnapshot,
   runTransaction,
   serverTimestamp,
+  collection,
+  query,
+  where,
 } from 'firebase/firestore';
 import { db } from './config';
 import type { GameState, GamePlayer, PlayerInfo, PlayerRole } from '../types';
@@ -139,6 +142,71 @@ export async function resetDice(roomId: string): Promise<void> {
 
 export async function startDraft(roomId: string): Promise<void> {
   await updateDoc(roomRef(roomId), { status: 'drafting' });
+}
+
+// --------------- Join requests ---------------
+
+/** Atomic: only one pending request at a time */
+export async function sendJoinRequest(
+  roomId: string,
+  request: { name: string; id: string },
+): Promise<boolean> {
+  const ref = roomRef(roomId);
+  return runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return false;
+    const data = snap.data();
+    if (data.guest) return false;
+    if (data.joinRequest?.status === 'pending') return false;
+    tx.update(ref, { joinRequest: { ...request, status: 'pending' } });
+    return true;
+  });
+}
+
+export async function approveJoinRequest(roomId: string): Promise<void> {
+  const ref = roomRef(roomId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+    const data = snap.data() as GameState;
+    if (!data.joinRequest || data.joinRequest.status !== 'pending') return;
+    tx.update(ref, {
+      guest: { name: data.joinRequest.name, id: data.joinRequest.id },
+      status: 'adding_players',
+      joinRequest: null,
+    });
+  });
+}
+
+export async function denyJoinRequest(roomId: string): Promise<void> {
+  await updateDoc(roomRef(roomId), { 'joinRequest.status': 'denied' });
+}
+
+export async function clearJoinRequest(roomId: string): Promise<void> {
+  await updateDoc(roomRef(roomId), { joinRequest: null });
+}
+
+// --------------- Public rooms ---------------
+
+export function subscribeToPublicRooms(
+  callback: (rooms: GameState[]) => void,
+): () => void {
+  const q = query(
+    collection(db, 'rooms'),
+    where('status', '==', 'waiting'),
+  );
+  return onSnapshot(q, (snap) => {
+    const rooms = snap.docs
+      .map((d) => d.data() as GameState)
+      .filter((r) => !r.guest);
+    callback(rooms);
+  });
+}
+
+// --------------- Squad saving ---------------
+
+export async function markSquadSaved(roomId: string): Promise<void> {
+  await updateDoc(roomRef(roomId), { squadSaved: true });
 }
 
 /** Atomic pick: remove from pool → add to team → switch turn */

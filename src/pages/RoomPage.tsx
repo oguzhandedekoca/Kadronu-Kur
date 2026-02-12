@@ -17,8 +17,10 @@ import {
   SolutionOutlined,
   TrophyOutlined,
   LoginOutlined,
+  LoadingOutlined,
 } from '@ant-design/icons';
 import { useGame } from '../context/GameContext';
+import { clearJoinRequest } from '../firebase/roomService';
 import LobbyView from '../components/LobbyView';
 import DiceRollView from '../components/DiceRollView';
 import DraftView from '../components/DraftView';
@@ -41,13 +43,24 @@ export default function RoomPage() {
   const [guestName, setGuestName] = useState('');
   const [busy, setBusy] = useState(false);
 
-  /* Subscribe to Firestore document */
   useEffect(() => {
     if (!roomId) return;
     const unsub = subscribeToRoom(roomId);
     return () => unsub();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
+
+  // --- Detect pending join-request approval ---
+  const isPending =
+    roomId != null &&
+    sessionStorage.getItem(`kk-${roomId}-pending`) === 'true';
+
+  // If approved (role got set via subscription), clear pending flag
+  useEffect(() => {
+    if (isPending && role && roomId) {
+      sessionStorage.removeItem(`kk-${roomId}-pending`);
+    }
+  }, [isPending, role, roomId]);
 
   /* ---- Loading ---- */
   if (loading) {
@@ -79,7 +92,59 @@ export default function RoomPage() {
     );
   }
 
-  /* ---- Not in room — show join form ---- */
+  /* ---- Pending join request — waiting for host approval ---- */
+  if (isPending && !role) {
+    const myPid = sessionStorage.getItem(`kk-${roomId}-pid`);
+    const wasDenied =
+      gameState.joinRequest?.id === myPid &&
+      gameState.joinRequest?.status === 'denied';
+
+    if (wasDenied) {
+      return (
+        <div className="center-screen">
+          <Result
+            status="error"
+            title="İstek Reddedildi"
+            subTitle={`${gameState.host.name} katılma isteğini reddetti.`}
+            extra={
+              <Button
+                type="primary"
+                onClick={() => {
+                  if (roomId) {
+                    clearJoinRequest(roomId);
+                    sessionStorage.removeItem(`kk-${roomId}-pid`);
+                    sessionStorage.removeItem(`kk-${roomId}-name`);
+                    sessionStorage.removeItem(`kk-${roomId}-pending`);
+                  }
+                  navigate('/');
+                }}
+              >
+                Ana Sayfaya Dön
+              </Button>
+            }
+          />
+        </div>
+      );
+    }
+
+    return (
+      <div className="center-screen">
+        <Card className="glass-card" style={{ maxWidth: 400, textAlign: 'center' }}>
+          <Space direction="vertical" size="large" align="center">
+            <LoadingOutlined style={{ fontSize: 40, color: '#52c41a' }} />
+            <Title level={4} style={{ margin: 0 }}>
+              İstek Gönderildi
+            </Title>
+            <Text type="secondary">
+              {gameState.host.name} katılma isteğini onaylamasını bekliyorsun...
+            </Text>
+          </Space>
+        </Card>
+      </div>
+    );
+  }
+
+  /* ---- Not in room — show direct join form ---- */
   if (!role && !gameState.guest) {
     const handleJoin = async () => {
       if (!guestName.trim() || !roomId) {
@@ -107,7 +172,6 @@ export default function RoomPage() {
             </Title>
             <Text type="secondary">{gameState.host.name} seni bekliyor!</Text>
           </div>
-
           <Card className="glass-card home-card">
             <Space direction="vertical" size="large" style={{ width: '100%' }}>
               <div>
@@ -187,7 +251,6 @@ export default function RoomPage() {
           ⚽ Kadronu Kur
         </Title>
       </header>
-
       <div className="game-steps">
         <Steps
           current={step}
@@ -200,7 +263,6 @@ export default function RoomPage() {
           ]}
         />
       </div>
-
       <div className="room-content">{renderView()}</div>
     </div>
   );

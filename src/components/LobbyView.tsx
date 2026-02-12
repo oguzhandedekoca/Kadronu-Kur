@@ -12,7 +12,13 @@ import {
   Tooltip,
   Tag,
 } from 'antd';
-import { PlusOutlined, CopyOutlined, UserOutlined } from '@ant-design/icons';
+import {
+  PlusOutlined,
+  CopyOutlined,
+  UserOutlined,
+  CheckOutlined,
+  CloseOutlined,
+} from '@ant-design/icons';
 import { useGame } from '../context/GameContext';
 import type { Position } from '../types';
 import { POSITION_LABELS } from '../types';
@@ -21,7 +27,14 @@ import PlayerCard from './PlayerCard';
 const { Title, Text } = Typography;
 
 export default function LobbyView() {
-  const { gameState, addPlayer, removePlayer, startRolling } = useGame();
+  const {
+    gameState,
+    addPlayer,
+    removePlayer,
+    startRolling,
+    approveJoinRequest,
+    denyJoinRequest,
+  } = useGame();
   const [playerName, setPlayerName] = useState('');
   const [position, setPosition] = useState<Position>('');
   const [adding, setAdding] = useState(false);
@@ -30,10 +43,10 @@ export default function LobbyView() {
 
   const isWaiting = gameState.status === 'waiting';
 
-  const handleCopyLink = () => {
-    const url = `${window.location.origin}/room/${gameState.roomId}`;
-    navigator.clipboard.writeText(url);
-    message.success('Oda linki kopyalandı!');
+  /* Copy room CODE only */
+  const handleCopyCode = () => {
+    navigator.clipboard.writeText(gameState.roomId);
+    message.success('Oda kodu kopyalandı!');
   };
 
   const handleAddPlayer = async () => {
@@ -60,11 +73,28 @@ export default function LobbyView() {
     }
   };
 
+  const handleApprove = async () => {
+    try {
+      await approveJoinRequest();
+      message.success('Oyuncu onaylandı!');
+    } catch {
+      message.error('Hata!');
+    }
+  };
+
+  const handleDeny = async () => {
+    try {
+      await denyJoinRequest();
+    } catch {
+      message.error('Hata!');
+    }
+  };
+
   const canProceed = gameState.guest && gameState.players.length >= 2;
 
   return (
     <div className="lobby-view">
-      {/* Room Code / Link */}
+      {/* Room Code */}
       <Card className="glass-card room-code-card">
         <div className="room-code-banner">
           <Text type="secondary">Oda Kodu</Text>
@@ -72,18 +102,16 @@ export default function LobbyView() {
             <Title level={2} style={{ margin: 0, letterSpacing: '0.3em' }}>
               {gameState.roomId}
             </Title>
-            <Tooltip title="Linki Kopyala">
+            <Tooltip title="Kodu Kopyala">
               <Button
                 icon={<CopyOutlined />}
-                onClick={handleCopyLink}
+                onClick={handleCopyCode}
                 type="text"
                 size="large"
               />
             </Tooltip>
           </div>
-          <Text type="secondary">
-            Linki rakibinle paylaş veya kodu gönder!
-          </Text>
+          <Text type="secondary">Bu kodu rakibinle paylaş!</Text>
         </div>
       </Card>
 
@@ -114,16 +142,46 @@ export default function LobbyView() {
         </Card>
       </div>
 
-      {/* Waiting for opponent */}
-      {isWaiting && (
+      {/* Join Request Banner */}
+      {gameState.joinRequest?.status === 'pending' && (
+        <Card className="glass-card join-request-card">
+          <div className="join-request-card__inner">
+            <div>
+              <Text strong>{gameState.joinRequest.name}</Text>
+              <Text type="secondary"> katılmak istiyor!</Text>
+            </div>
+            <Space>
+              <Button
+                type="primary"
+                icon={<CheckOutlined />}
+                onClick={handleApprove}
+                size="small"
+              >
+                Onayla
+              </Button>
+              <Button
+                danger
+                icon={<CloseOutlined />}
+                onClick={handleDeny}
+                size="small"
+              >
+                Reddet
+              </Button>
+            </Space>
+          </div>
+        </Card>
+      )}
+
+      {/* Waiting */}
+      {isWaiting && !gameState.joinRequest && (
         <Card className="glass-card" style={{ textAlign: 'center' }}>
           <Text type="secondary">
-            Rakibinin katılmasını bekliyorsun... Linki paylaş!
+            Rakibinin katılmasını bekliyorsun... Kodu paylaş!
           </Text>
         </Card>
       )}
 
-      {/* Add players phase */}
+      {/* Add players */}
       {!isWaiting && (
         <>
           <Card className="glass-card add-player-card">
@@ -163,7 +221,6 @@ export default function LobbyView() {
             </div>
           </Card>
 
-          {/* Player pool */}
           <div className="player-pool">
             {gameState.players.length === 0 ? (
               <Empty
@@ -184,7 +241,6 @@ export default function LobbyView() {
             )}
           </div>
 
-          {/* Proceed */}
           <div className="lobby-actions">
             <Button
               type="primary"

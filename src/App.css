@@ -810,6 +810,133 @@
 }
 
 /* ================================================
+   PUBLIC ROOMS
+   ================================================ */
+.public-rooms {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.public-room-card {
+  padding: 0 !important;
+}
+.public-room-card .ant-card-body {
+  padding: 12px 16px;
+}
+.public-room-card__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.public-room-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.public-room-card:hover {
+  border-color: rgba(82, 196, 26, 0.4) !important;
+  box-shadow: 0 0 12px rgba(82, 196, 26, 0.1);
+}
+
+/* ================================================
+   SAVED SQUADS
+   ================================================ */
+.saved-squads__sort {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+.saved-squads__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.squad-card .ant-card-body {
+  padding: 12px 16px;
+}
+.squad-card__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 4px;
+}
+.squad-card__vs {
+  display: flex;
+  align-items: center;
+}
+.squad-card__teams {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.squad-card__rating {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.squad-team-mini {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.squad-team-mini__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+.squad-card:hover {
+  border-color: rgba(250, 173, 20, 0.35) !important;
+  box-shadow: 0 0 16px rgba(250, 173, 20, 0.08);
+}
+
+/* ================================================
+   JOIN REQUEST BANNER
+   ================================================ */
+.join-request-card {
+  border: 1px solid rgba(82, 196, 26, 0.5) !important;
+  animation: pulseBorderJoin 2s ease-in-out infinite;
+}
+.join-request-card .ant-card-body {
+  padding: 14px 18px;
+}
+.join-request-card__inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+@keyframes pulseBorderJoin {
+  0%, 100% { border-color: rgba(82, 196, 26, 0.3); box-shadow: 0 0 8px rgba(82, 196, 26, 0.1); }
+  50% { border-color: rgba(82, 196, 26, 0.7); box-shadow: 0 0 20px rgba(82, 196, 26, 0.2); }
+}
+
+/* ================================================
+   HOME TABS
+   ================================================ */
+.home-tabs {
+  margin-top: 24px;
+  width: 100%;
+}
+.home-tabs .ant-tabs-nav::before {
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+.home-tabs .ant-tabs-tab {
+  color: rgba(255, 255, 255, 0.5) !important;
+}
+.home-tabs .ant-tabs-tab-active .ant-tabs-tab-btn {
+  color: #52c41a !important;
+}
+.home-tabs .ant-tabs-ink-bar {
+  background: #52c41a !important;
+}
+
+/* ================================================
    RESPONSIVE
    ================================================ */
 @media (max-width: 768px) {
@@ -866,5 +993,12 @@
   }
   .dice-arena {
     flex-direction: column;
+  }
+  .squad-card__teams {
+    grid-template-columns: 1fr;
+  }
+  .join-request-card__inner {
+    flex-direction: column;
+    text-align: center;
   }
 }

@@ -1,7 +1,10 @@
-import { Typography, Card, Button, Space, Divider, Tag } from 'antd';
+import { useEffect, useRef } from 'react';
+import { Typography, Card, Button, Space, Divider, Tag, message } from 'antd';
 import { ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
+import { saveSquad } from '../firebase/squadService';
+import { markSquadSaved } from '../firebase/roomService';
 import PlayerCard from './PlayerCard';
 import Confetti from './Confetti';
 import { POSITION_COLORS, POSITION_LABELS } from '../types';
@@ -32,8 +35,28 @@ function PositionSummary({ team }: { team: PlayerInfo[] }) {
 }
 
 export default function ResultView() {
-  const { gameState, resetGame } = useGame();
+  const { gameState, role, resetGame } = useGame();
   const navigate = useNavigate();
+  const savedRef = useRef(false);
+
+  /* Auto-save completed squad (host triggers the save once) */
+  useEffect(() => {
+    if (
+      gameState &&
+      gameState.status === 'completed' &&
+      !gameState.squadSaved &&
+      role === 'host' &&
+      !savedRef.current
+    ) {
+      savedRef.current = true;
+      saveSquad(gameState)
+        .then(() => markSquadSaved(gameState.roomId))
+        .then(() => message.success('Kadro topluluk listesine kaydedildi!'))
+        .catch(() => {
+          /* silent */
+        });
+    }
+  }, [gameState, role]);
 
   if (!gameState) return null;
 
