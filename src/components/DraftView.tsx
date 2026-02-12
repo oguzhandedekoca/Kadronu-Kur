@@ -87,7 +87,7 @@ export default function DraftView() {
               </Text>
             ) : (
               gameState.hostTeam.map((p, idx) => (
-                <PlayerCard key={p.id} player={p} index={idx} compact />
+                <PlayerCard key={p.id} player={p} index={idx} compact isCaptain={idx === 0} />
               ))
             )}
           </div>
@@ -144,7 +144,7 @@ export default function DraftView() {
               </Text>
             ) : (
               gameState.guestTeam.map((p, idx) => (
-                <PlayerCard key={p.id} player={p} index={idx} compact />
+                <PlayerCard key={p.id} player={p} index={idx} compact isCaptain={idx === 0} />
               ))
             )}
           </div>

@@ -944,6 +944,174 @@
 }
 
 /* ================================================
+   MATCH BANNER (replaces room code after match)
+   ================================================ */
+.match-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+}
+.match-banner__names {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.match-banner__vs {
+  font-weight: 800;
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.35);
+  letter-spacing: 0.1em;
+}
+.match-banner-card {
+  border: 1px solid rgba(82, 196, 26, 0.25) !important;
+}
+
+/* ================================================
+   FOOTBALL PITCH
+   ================================================ */
+.pitch-container {
+  margin: 32px auto;
+  max-width: 500px;
+}
+.pitch {
+  border-radius: 14px;
+  overflow: hidden;
+  border: 2px solid rgba(255, 255, 255, 0.1);
+}
+.pitch__field {
+  position: relative;
+  background: linear-gradient(
+    180deg,
+    #1a5c2a 0%,
+    #1f7033 12%,
+    #1a5c2a 25%,
+    #1f7033 37%,
+    #1a5c2a 50%,
+    #1f7033 62%,
+    #1a5c2a 75%,
+    #1f7033 87%,
+    #1a5c2a 100%
+  );
+  display: flex;
+  flex-direction: column;
+  min-height: 540px;
+}
+.pitch__center-line {
+  position: absolute;
+  top: 50%;
+  left: 5%;
+  right: 5%;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.25);
+  z-index: 1;
+}
+.pitch__center-circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 70px;
+  height: 70px;
+  transform: translate(-50%, -50%);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  border-radius: 50%;
+  z-index: 1;
+}
+.pitch-half {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-evenly;
+  padding: 12px 8px;
+  position: relative;
+}
+.pitch-half--guest {
+  flex-direction: column;
+}
+.pitch-half--host {
+  flex-direction: column;
+}
+.pitch-half__label {
+  position: absolute;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.3);
+}
+.pitch-half--host .pitch-half__label {
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(82, 196, 26, 0.5);
+}
+.pitch-half--guest .pitch-half__label {
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(24, 144, 255, 0.5);
+}
+.pitch-row {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  min-height: 48px;
+  align-items: center;
+}
+.pitch-player {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.pitch-player__dot {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+  color: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  position: relative;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+  transition: transform 0.2s;
+}
+.pitch-player__dot--captain {
+  border: 2px solid #faad14;
+  box-shadow: 0 0 10px rgba(250, 173, 20, 0.4);
+}
+.pitch-player__badge {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: #faad14;
+  color: #000;
+  font-size: 8px;
+  font-weight: 900;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+.pitch-player__name {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  max-width: 60px;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+}
+
+/* ================================================
    RESPONSIVE
    ================================================ */
 @media (max-width: 768px) {
@@ -979,6 +1147,20 @@
   }
   .home-hero__title {
     font-size: 32px !important;
+  }
+  .pitch__field {
+    min-height: 440px;
+  }
+  .pitch-row {
+    gap: 12px;
+  }
+  .pitch-player__dot {
+    width: 30px;
+    height: 30px;
+  }
+  .pitch-player__name {
+    font-size: 9px;
+    max-width: 50px;
   }
   .room-content {
     padding: 0 16px 32px;

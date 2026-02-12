@@ -162,26 +162,48 @@ export default function LobbyView() {
 
   return (
     <div className="lobby-view">
-      {/* Room Code */}
-      <Card className="glass-card room-code-card">
-        <div className="room-code-banner">
-          <Text type="secondary">Oda Kodu</Text>
-          <div className="room-code-display">
-            <Title level={2} style={{ margin: 0, letterSpacing: '0.3em' }}>
-              {gameState.roomId}
-            </Title>
-            <Tooltip title="Kodu Kopyala">
-              <Button
-                icon={<CopyOutlined />}
-                onClick={handleCopyCode}
-                type="text"
-                size="large"
-              />
-            </Tooltip>
+      {/* Room Code (only if waiting for guest) / Match Info (if guest joined) */}
+      {isWaiting ? (
+        <Card className="glass-card room-code-card">
+          <div className="room-code-banner">
+            <Text type="secondary">Oda Kodu</Text>
+            <div className="room-code-display">
+              <Title level={2} style={{ margin: 0, letterSpacing: '0.3em' }}>
+                {gameState.roomId}
+              </Title>
+              <Tooltip title="Kodu Kopyala">
+                <Button
+                  icon={<CopyOutlined />}
+                  onClick={handleCopyCode}
+                  type="text"
+                  size="large"
+                />
+              </Tooltip>
+            </div>
+            <Text type="secondary">Bu kodu rakibinle paylaş!</Text>
           </div>
-          <Text type="secondary">Bu kodu rakibinle paylaş!</Text>
-        </div>
-      </Card>
+        </Card>
+      ) : (
+        <Card className="glass-card match-banner-card">
+          <div className="match-banner">
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              ⚡ Eşleşme sağlandı!
+            </Text>
+            <div className="match-banner__names">
+              <Text strong style={{ color: '#52c41a', fontSize: 18 }}>
+                {gameState.host.name}
+              </Text>
+              <span className="match-banner__vs">VS</span>
+              <Text strong style={{ color: '#1890ff', fontSize: 18 }}>
+                {gameState.guest?.name}
+              </Text>
+            </div>
+            <Text type="secondary" style={{ fontSize: 12 }}>
+              Oyuncuları ekleyin ve zar atışına geçin!
+            </Text>
+          </div>
+        </Card>
+      )}
 
       {/* Players */}
       <div className="players-status">

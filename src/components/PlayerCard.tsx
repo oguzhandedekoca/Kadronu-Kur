@@ -1,5 +1,5 @@
 import { Tag } from 'antd';
-import { CloseOutlined } from '@ant-design/icons';
+import { CloseOutlined, CrownOutlined } from '@ant-design/icons';
 import type { PlayerInfo } from '../types';
 import { POSITION_COLORS, POSITION_LABELS } from '../types';
 
@@ -11,6 +11,7 @@ interface PlayerCardProps {
   showRemove?: boolean;
   onRemove?: () => void;
   compact?: boolean;
+  isCaptain?: boolean;
 }
 
 export default function PlayerCard({
@@ -21,6 +22,7 @@ export default function PlayerCard({
   showRemove = false,
   onRemove,
   compact = false,
+  isCaptain = false,
 }: PlayerCardProps) {
   const posColor = player.position
     ? POSITION_COLORS[player.position]
@@ -54,7 +56,15 @@ export default function PlayerCard({
           {player.name.charAt(0).toUpperCase()}
         </div>
         <div className="player-card__info">
-          <span className="player-card__name">{player.name}</span>
+          <span className="player-card__name">
+            {isCaptain && (
+              <CrownOutlined style={{ color: '#faad14', marginRight: 4, fontSize: 12 }} />
+            )}
+            {player.name}
+            {isCaptain && (
+              <span style={{ color: '#faad14', fontSize: 10, marginLeft: 4 }}>(K)</span>
+            )}
+          </span>
           {player.position && (
             <Tag
               color={posColor}

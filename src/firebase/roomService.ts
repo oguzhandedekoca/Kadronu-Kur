@@ -140,8 +140,25 @@ export async function resetDice(roomId: string): Promise<void> {
   });
 }
 
+/** Start draft: auto-add host & guest as team captains (first members) */
 export async function startDraft(roomId: string): Promise<void> {
-  await updateDoc(roomRef(roomId), { status: 'drafting' });
+  const ref = roomRef(roomId);
+  await runTransaction(db, async (tx) => {
+    const snap = await tx.get(ref);
+    if (!snap.exists()) return;
+    const data = snap.data() as GameState;
+    tx.update(ref, {
+      status: 'drafting',
+      hostTeam: [{ id: data.host.id, name: data.host.name, position: '' }],
+      guestTeam: [
+        {
+          id: data.guest?.id ?? '',
+          name: data.guest?.name ?? '',
+          position: '',
+        },
+      ],
+    });
+  });
 }
 
 // --------------- Join requests ---------------

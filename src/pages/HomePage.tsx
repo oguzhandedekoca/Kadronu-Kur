@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Input,
   Button,
@@ -9,23 +9,23 @@ import {
   Divider,
   message,
   Tabs,
-} from 'antd';
+} from "antd";
 import {
   PlusOutlined,
   LoginOutlined,
   TeamOutlined,
   GlobalOutlined,
   TrophyOutlined,
-} from '@ant-design/icons';
-import { useGame } from '../context/GameContext';
-import PublicRooms from '../components/PublicRooms';
-import SavedSquads from '../components/SavedSquads';
+} from "@ant-design/icons";
+import { useGame } from "../context/GameContext";
+import PublicRooms from "../components/PublicRooms";
+import SavedSquads from "../components/SavedSquads";
 
 const { Title, Text } = Typography;
 
 export default function HomePage() {
-  const [name, setName] = useState('');
-  const [roomCode, setRoomCode] = useState('');
+  const [name, setName] = useState("");
+  const [roomCode, setRoomCode] = useState("");
   const [joining, setJoining] = useState(false);
   const [busy, setBusy] = useState(false);
   const { createRoom, joinRoom } = useGame();
@@ -33,7 +33,7 @@ export default function HomePage() {
 
   const handleCreate = async () => {
     if (!name.trim()) {
-      message.warning('Lütfen adını gir!');
+      message.warning("Lütfen adını gir!");
       return;
     }
     setBusy(true);
@@ -41,8 +41,8 @@ export default function HomePage() {
       const roomId = await createRoom(name.trim());
       navigate(`/room/${roomId}`);
     } catch (err) {
-      console.error('Room create error:', err);
-      message.error('Oda oluşturulamadı! Firebase bağlantısını kontrol et.');
+      console.error("Room create error:", err);
+      message.error("Oda oluşturulamadı! Firebase bağlantısını kontrol et.");
     } finally {
       setBusy(false);
     }
@@ -50,11 +50,11 @@ export default function HomePage() {
 
   const handleJoin = async () => {
     if (!name.trim()) {
-      message.warning('Lütfen adını gir!');
+      message.warning("Lütfen adını gir!");
       return;
     }
     if (!roomCode.trim()) {
-      message.warning('Oda kodunu gir!');
+      message.warning("Oda kodunu gir!");
       return;
     }
     const code = roomCode.trim().toUpperCase();
@@ -64,10 +64,10 @@ export default function HomePage() {
       if (ok) {
         navigate(`/room/${code}`);
       } else {
-        message.error('Oda bulunamadı veya dolu!');
+        message.error("Oda bulunamadı veya dolu!");
       }
     } catch {
-      message.error('Bağlantı hatası!');
+      message.error("Bağlantı hatası!");
     } finally {
       setBusy(false);
     }
@@ -83,17 +83,17 @@ export default function HomePage() {
             KADRONU KUR
           </Title>
           <Text className="home-hero__subtitle">
-            Kadroyu sen kur, sahaya sen çık!
+            Adam alış ve en iyi kadroyu sen kur!
           </Text>
         </div>
 
         {/* Create / Join */}
         <Card className="glass-card home-card">
-          <Space direction="vertical" size="large" style={{ width: '100%' }}>
+          <Space direction="vertical" size="large" style={{ width: "100%" }}>
             <div>
               <Text
                 strong
-                style={{ display: 'block', marginBottom: 8, fontSize: 14 }}
+                style={{ display: "block", marginBottom: 8, fontSize: 14 }}
               >
                 İsmin
               </Text>
@@ -122,7 +122,7 @@ export default function HomePage() {
             </Button>
 
             <Divider
-              style={{ margin: 0, borderColor: 'rgba(255,255,255,0.1)' }}
+              style={{ margin: 0, borderColor: "rgba(255,255,255,0.1)" }}
             >
               veya
             </Divider>
@@ -137,7 +137,7 @@ export default function HomePage() {
                 Kod ile Katıl
               </Button>
             ) : (
-              <Space.Compact style={{ width: '100%' }}>
+              <Space.Compact style={{ width: "100%" }}>
                 <Input
                   size="large"
                   placeholder="Oda Kodu"
@@ -145,8 +145,8 @@ export default function HomePage() {
                   onChange={(e) => setRoomCode(e.target.value.toUpperCase())}
                   maxLength={6}
                   style={{
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.15em',
+                    textTransform: "uppercase",
+                    letterSpacing: "0.15em",
                   }}
                   onPressEnter={handleJoin}
                   disabled={busy}
@@ -172,7 +172,7 @@ export default function HomePage() {
             centered
             items={[
               {
-                key: 'rooms',
+                key: "rooms",
                 label: (
                   <span>
                     <GlobalOutlined /> Açık Odalar
@@ -181,7 +181,7 @@ export default function HomePage() {
                 children: <PublicRooms playerName={name} />,
               },
               {
-                key: 'squads',
+                key: "squads",
                 label: (
                   <span>
                     <TrophyOutlined /> Topluluk Kadroları

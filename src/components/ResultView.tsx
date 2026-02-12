@@ -6,6 +6,7 @@ import { useGame } from '../context/GameContext';
 import { saveSquad } from '../firebase/squadService';
 import { markSquadSaved } from '../firebase/roomService';
 import PlayerCard from './PlayerCard';
+import PitchView from './PitchView';
 import Confetti from './Confetti';
 import { POSITION_COLORS, POSITION_LABELS } from '../types';
 import type { PlayerInfo, Position } from '../types';
@@ -52,8 +53,9 @@ export default function ResultView() {
       saveSquad(gameState)
         .then(() => markSquadSaved(gameState.roomId))
         .then(() => message.success('Kadro topluluk listesine kaydedildi!'))
-        .catch(() => {
-          /* silent */
+        .catch((err) => {
+          console.error('Squad save error:', err);
+          savedRef.current = false; // allow retry
         });
     }
   }, [gameState, role]);
@@ -94,7 +96,7 @@ export default function ResultView() {
           <Divider style={{ margin: '12px 0' }} />
           <div className="result-team__list">
             {gameState.hostTeam.map((p, idx) => (
-              <PlayerCard key={p.id} player={p} index={idx} compact />
+              <PlayerCard key={p.id} player={p} index={idx} compact isCaptain={idx === 0} />
             ))}
           </div>
           <Divider style={{ margin: '12px 0' }} />
@@ -123,13 +125,21 @@ export default function ResultView() {
           <Divider style={{ margin: '12px 0' }} />
           <div className="result-team__list">
             {gameState.guestTeam.map((p, idx) => (
-              <PlayerCard key={p.id} player={p} index={idx} compact />
+              <PlayerCard key={p.id} player={p} index={idx} compact isCaptain={idx === 0} />
             ))}
           </div>
           <Divider style={{ margin: '12px 0' }} />
           <PositionSummary team={gameState.guestTeam} />
         </Card>
       </div>
+
+      {/* Football Pitch Formation */}
+      <PitchView
+        hostTeam={gameState.hostTeam}
+        guestTeam={gameState.guestTeam}
+        hostName={gameState.host.name}
+        guestName={gameState.guest?.name ?? ''}
+      />
 
       <div className="result-actions">
         <Space size="large">
