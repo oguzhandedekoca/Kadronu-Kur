@@ -3,6 +3,7 @@ import { ReloadOutlined } from '@ant-design/icons';
 import { useNavigate } from 'react-router-dom';
 import { useGame } from '../context/GameContext';
 import PlayerCard from './PlayerCard';
+import Confetti from './Confetti';
 import { POSITION_COLORS, POSITION_LABELS } from '../types';
 import type { PlayerInfo, Position } from '../types';
 
@@ -43,6 +44,8 @@ export default function ResultView() {
 
   return (
     <div className="result-view">
+      <Confetti duration={5000} />
+
       <div className="result-header">
         <div className="result-header__trophy">🏆</div>
         <Title level={2} style={{ margin: 0 }}>
@@ -52,11 +55,17 @@ export default function ResultView() {
       </div>
 
       <div className="result-teams">
-        <Card className="glass-card result-team-card">
+        <Card className="glass-card result-team-card result-team-card--host">
           <div className="result-team__header">
-            <Title level={3} style={{ margin: 0 }}>
-              {gameState.host.name}
-            </Title>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span
+                className="team-panel__dot"
+                style={{ background: '#52c41a' }}
+              />
+              <Title level={3} style={{ margin: 0 }}>
+                {gameState.host.name}
+              </Title>
+            </div>
             <Text type="secondary">{gameState.hostTeam.length} oyuncu</Text>
           </div>
           <Divider style={{ margin: '12px 0' }} />
@@ -70,14 +79,22 @@ export default function ResultView() {
         </Card>
 
         <div className="result-vs">
-          <span>VS</span>
+          <div className="result-vs__circle">
+            <span>VS</span>
+          </div>
         </div>
 
-        <Card className="glass-card result-team-card">
+        <Card className="glass-card result-team-card result-team-card--guest">
           <div className="result-team__header">
-            <Title level={3} style={{ margin: 0 }}>
-              {gameState.guest?.name}
-            </Title>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span
+                className="team-panel__dot"
+                style={{ background: '#1890ff' }}
+              />
+              <Title level={3} style={{ margin: 0 }}>
+                {gameState.guest?.name}
+              </Title>
+            </div>
             <Text type="secondary">{gameState.guestTeam.length} oyuncu</Text>
           </div>
           <Divider style={{ margin: '12px 0' }} />

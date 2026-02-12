@@ -1,4 +1,4 @@
-import { Typography, Badge, Empty, message } from 'antd';
+import { Typography, Badge, Empty, message, Progress } from 'antd';
 import { useGame } from '../context/GameContext';
 import PlayerCard from './PlayerCard';
 
@@ -18,6 +18,7 @@ export default function DraftView() {
 
   const totalPicked = gameState.hostTeam.length + gameState.guestTeam.length;
   const totalPlayers = totalPicked + gameState.players.length;
+  const progress = totalPlayers > 0 ? (totalPicked / totalPlayers) * 100 : 0;
 
   const handlePick = async (playerId: string) => {
     if (!isMyTurn) {
@@ -33,8 +34,19 @@ export default function DraftView() {
 
   return (
     <div className="draft-view">
+      {/* Progress */}
+      <Progress
+        percent={progress}
+        showInfo={false}
+        strokeColor={{ from: '#52c41a', to: '#1890ff' }}
+        trailColor="rgba(255,255,255,0.06)"
+        style={{ marginBottom: 4 }}
+      />
+
       {/* Turn banner */}
-      <div className={`turn-banner turn-banner--${gameState.currentTurn}`}>
+      <div
+        className={`turn-banner turn-banner--${gameState.currentTurn} ${isMyTurn ? 'turn-banner--mine' : ''}`}
+      >
         <div className="turn-banner__content">
           <span className="turn-banner__icon">
             {gameState.currentTurn === 'host' ? '🟢' : '🔵'}
@@ -45,7 +57,7 @@ export default function DraftView() {
               : `${currentName} seçiyor...`}
           </Title>
         </div>
-        <Text style={{ color: 'rgba(255,255,255,0.7)' }}>
+        <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
           Seçim {totalPicked + 1} / {totalPlayers}
         </Text>
       </div>
@@ -53,12 +65,15 @@ export default function DraftView() {
       <div className="draft-layout">
         {/* Host team */}
         <div
-          className={`team-panel ${gameState.currentTurn === 'host' ? 'team-panel--active' : ''}`}
+          className={`team-panel ${gameState.currentTurn === 'host' ? 'team-panel--active team-panel--host' : ''}`}
         >
           <div className="team-panel__header">
-            <Title level={4} style={{ margin: 0 }}>
-              {gameState.host.name}
-            </Title>
+            <div className="team-panel__title">
+              <span className="team-panel__dot" style={{ background: '#52c41a' }} />
+              <Title level={4} style={{ margin: 0 }}>
+                {gameState.host.name}
+              </Title>
+            </div>
             <Badge
               count={gameState.hostTeam.length}
               showZero
@@ -78,7 +93,7 @@ export default function DraftView() {
           </div>
         </div>
 
-        {/* Available pool */}
+        {/* Pool */}
         <div className="draft-pool">
           <Title
             level={4}
@@ -107,12 +122,15 @@ export default function DraftView() {
 
         {/* Guest team */}
         <div
-          className={`team-panel ${gameState.currentTurn === 'guest' ? 'team-panel--active' : ''}`}
+          className={`team-panel ${gameState.currentTurn === 'guest' ? 'team-panel--active team-panel--guest' : ''}`}
         >
           <div className="team-panel__header">
-            <Title level={4} style={{ margin: 0 }}>
-              {gameState.guest?.name}
-            </Title>
+            <div className="team-panel__title">
+              <span className="team-panel__dot" style={{ background: '#1890ff' }} />
+              <Title level={4} style={{ margin: 0 }}>
+                {gameState.guest?.name}
+              </Title>
+            </div>
             <Badge
               count={gameState.guestTeam.length}
               showZero

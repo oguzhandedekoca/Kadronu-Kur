@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { Button, Typography, message } from 'antd';
 import { useGame } from '../context/GameContext';
 import Dice from './Dice';
@@ -7,22 +7,89 @@ const { Title, Text } = Typography;
 
 export default function DiceRollView() {
   const { gameState, role, rollDice, resetDice, startDraft } = useGame();
-  const [rolling, setRolling] = useState(false);
 
-  if (!gameState) return null;
+  const [hostAnimating, setHostAnimating] = useState(false);
+  const [guestAnimating, setGuestAnimating] = useState(false);
+  const [showFlash, setShowFlash] = useState(false);
+
+  // Track previous values to detect remote rolls
+  const prevHostDice = useRef<number | null>(null);
+  const prevGuestDice = useRef<number | null>(null);
+  const initRef = useRef(false);
+
+  // Detect remote dice rolls & trigger animation for opponent
+  useEffect(() => {
+    if (!gameState || !initRef.current) {
+      // Skip the first render to avoid false triggers
+      if (gameState) {
+        prevHostDice.current = gameState.hostDice;
+        prevGuestDice.current = gameState.guestDice;
+        initRef.current = true;
+      }
+      return;
+    }
+
+    // Opponent (host) just rolled → I'm guest, animate host dice
+    if (
+      role === 'guest' &&
+      gameState.hostDice !== null &&
+      prevHostDice.current === null
+    ) {
+      setHostAnimating(true);
+      setShowFlash(true);
+      setTimeout(() => setShowFlash(false), 400);
+      setTimeout(() => setHostAnimating(false), 1500);
+    }
+
+    // Opponent (guest) just rolled → I'm host, animate guest dice
+    if (
+      role === 'host' &&
+      gameState.guestDice !== null &&
+      prevGuestDice.current === null
+    ) {
+      setGuestAnimating(true);
+      setShowFlash(true);
+      setTimeout(() => setShowFlash(false), 400);
+      setTimeout(() => setGuestAnimating(false), 1500);
+    }
+
+    prevHostDice.current = gameState.hostDice;
+    prevGuestDice.current = gameState.guestDice;
+  }, [gameState?.hostDice, gameState?.guestDice, role, gameState]);
+
+  // Reset refs when dice are cleared (re-roll on tie)
+  useEffect(() => {
+    if (
+      gameState &&
+      gameState.hostDice === null &&
+      gameState.guestDice === null
+    ) {
+      prevHostDice.current = null;
+      prevGuestDice.current = null;
+      setHostAnimating(false);
+      setGuestAnimating(false);
+    }
+  }, [gameState?.hostDice, gameState?.guestDice, gameState]);
 
   const handleRoll = useCallback(async () => {
     if (!role) return;
     const value = Math.floor(Math.random() * 6) + 1;
-    setRolling(true);
-    // show animation, then commit to Firestore
-    setTimeout(async () => {
-      setRolling(false);
-      try {
-        await rollDice(value);
-      } catch {
-        message.error('Zar atılamadı!');
-      }
+
+    // Start local animation
+    if (role === 'host') setHostAnimating(true);
+    else setGuestAnimating(true);
+
+    // Write to Firestore IMMEDIATELY — no delay
+    rollDice(value).catch(() => message.error('Zar atılamadı!'));
+
+    // Flash effect
+    setShowFlash(true);
+    setTimeout(() => setShowFlash(false), 400);
+
+    // Visual animation runs locally for 2s
+    setTimeout(() => {
+      if (role === 'host') setHostAnimating(false);
+      else setGuestAnimating(false);
     }, 2000);
   }, [role, rollDice]);
 
@@ -42,19 +109,23 @@ export default function DiceRollView() {
     }
   };
 
+  if (!gameState) return null;
+
   const bothRolled =
     gameState.hostDice !== null && gameState.guestDice !== null;
   const isTie = bothRolled && gameState.hostDice === gameState.guestDice;
   const winner = gameState.firstPicker;
 
-  // What can the current user do?
   const myDice = role === 'host' ? gameState.hostDice : gameState.guestDice;
-  const canRoll = myDice === null && !rolling;
-  const isHostRolling = role === 'host' && rolling;
-  const isGuestRolling = role === 'guest' && rolling;
+  const canRoll =
+    myDice === null &&
+    !(role === 'host' ? hostAnimating : guestAnimating);
 
   return (
     <div className="dice-roll-view">
+      {/* Screen flash on roll */}
+      {showFlash && <div className="screen-flash" />}
+
       <div className="dice-header">
         <span className="dice-header__emoji">🎲</span>
         <Title level={2} style={{ margin: 0 }}>
@@ -66,17 +137,16 @@ export default function DiceRollView() {
       </div>
 
       <div className="dice-arena">
-        {/* Host side */}
-        <div className="dice-side">
-          <Title level={4} className="dice-side__name">
-            {gameState.host.name}
-          </Title>
+        {/* Host */}
+        <div className={`dice-side ${hostAnimating ? 'dice-side--active' : ''}`}>
+          <div className="dice-side__label">
+            <span className="dice-side__dot dice-side__dot--green" />
+            <Title level={4} className="dice-side__name">
+              {gameState.host.name}
+            </Title>
+          </div>
           <div className="dice-wrapper">
-            <Dice
-              value={gameState.hostDice}
-              rolling={isHostRolling}
-              size={130}
-            />
+            <Dice value={gameState.hostDice} rolling={hostAnimating} size={140} />
           </div>
           {role === 'host' && canRoll && (
             <Button
@@ -88,28 +158,38 @@ export default function DiceRollView() {
               Zar At!
             </Button>
           )}
-          {gameState.hostDice !== null && !isHostRolling && (
-            <div className="dice-value">{gameState.hostDice}</div>
+          {gameState.hostDice !== null && !hostAnimating && (
+            <div className="dice-value-badge">{gameState.hostDice}</div>
           )}
-          {role !== 'host' && gameState.hostDice === null && !isHostRolling && (
-            <Text type="secondary">Zar bekleniyor...</Text>
-          )}
+          {role !== 'host' &&
+            gameState.hostDice === null &&
+            !hostAnimating && (
+              <Text type="secondary" className="waiting-dots">
+                Zar bekleniyor
+              </Text>
+            )}
         </div>
 
+        {/* VS */}
         <div className="dice-vs">
-          <span className="dice-vs__text">VS</span>
+          <div className="dice-vs__circle">
+            <span>VS</span>
+          </div>
         </div>
 
-        {/* Guest side */}
-        <div className="dice-side">
-          <Title level={4} className="dice-side__name">
-            {gameState.guest?.name}
-          </Title>
+        {/* Guest */}
+        <div className={`dice-side ${guestAnimating ? 'dice-side--active' : ''}`}>
+          <div className="dice-side__label">
+            <span className="dice-side__dot dice-side__dot--blue" />
+            <Title level={4} className="dice-side__name">
+              {gameState.guest?.name}
+            </Title>
+          </div>
           <div className="dice-wrapper">
             <Dice
               value={gameState.guestDice}
-              rolling={isGuestRolling}
-              size={130}
+              rolling={guestAnimating}
+              size={140}
             />
           </div>
           {role === 'guest' && canRoll && (
@@ -122,19 +202,21 @@ export default function DiceRollView() {
               Zar At!
             </Button>
           )}
-          {gameState.guestDice !== null && !isGuestRolling && (
-            <div className="dice-value">{gameState.guestDice}</div>
+          {gameState.guestDice !== null && !guestAnimating && (
+            <div className="dice-value-badge">{gameState.guestDice}</div>
           )}
           {role !== 'guest' &&
             gameState.guestDice === null &&
-            !isGuestRolling && (
-              <Text type="secondary">Zar bekleniyor...</Text>
+            !guestAnimating && (
+              <Text type="secondary" className="waiting-dots">
+                Zar bekleniyor
+              </Text>
             )}
         </div>
       </div>
 
-      {/* Result */}
-      {bothRolled && !isTie && winner && (
+      {/* Results */}
+      {bothRolled && !hostAnimating && !guestAnimating && !isTie && winner && (
         <div className="dice-result-banner winner-banner">
           <Title level={3} style={{ margin: 0 }}>
             🏆{' '}
@@ -155,7 +237,7 @@ export default function DiceRollView() {
         </div>
       )}
 
-      {isTie && (
+      {bothRolled && !hostAnimating && !guestAnimating && isTie && (
         <div className="dice-result-banner tie-banner">
           <Title level={3} style={{ margin: 0 }}>
             🤝 Berabere! Tekrar atın!

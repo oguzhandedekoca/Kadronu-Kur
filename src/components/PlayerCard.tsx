@@ -22,11 +22,24 @@ export default function PlayerCard({
   onRemove,
   compact = false,
 }: PlayerCardProps) {
+  const posColor = player.position
+    ? POSITION_COLORS[player.position]
+    : '#555';
+
   return (
     <div
       className={`player-card ${selectable ? 'player-card--selectable' : ''} ${compact ? 'player-card--compact' : ''}`}
       onClick={selectable ? onClick : undefined}
+      style={{
+        '--pos-color': posColor,
+      } as React.CSSProperties}
     >
+      {/* Position accent stripe */}
+      <div
+        className="player-card__stripe"
+        style={{ background: posColor }}
+      />
+
       <div className="player-card__inner">
         {index !== undefined && (
           <span className="player-card__index">{index + 1}</span>
@@ -34,9 +47,8 @@ export default function PlayerCard({
         <div
           className="player-card__avatar"
           style={{
-            borderColor: player.position
-              ? POSITION_COLORS[player.position]
-              : '#555',
+            background: `linear-gradient(135deg, ${posColor}33, ${posColor}11)`,
+            borderColor: posColor,
           }}
         >
           {player.name.charAt(0).toUpperCase()}
@@ -45,8 +57,8 @@ export default function PlayerCard({
           <span className="player-card__name">{player.name}</span>
           {player.position && (
             <Tag
-              color={POSITION_COLORS[player.position]}
-              style={{ margin: 0, fontSize: 11 }}
+              color={posColor}
+              style={{ margin: 0, fontSize: 10, lineHeight: '18px', padding: '0 6px' }}
             >
               {POSITION_LABELS[player.position]}
             </Tag>

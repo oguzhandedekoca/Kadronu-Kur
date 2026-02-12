@@ -6,6 +6,17 @@ import HomePage from './pages/HomePage';
 import RoomPage from './pages/RoomPage';
 import './App.css';
 
+function BackgroundEffects() {
+  return (
+    <div className="bg-effects" aria-hidden>
+      <div className="bg-orb bg-orb--1" />
+      <div className="bg-orb bg-orb--2" />
+      <div className="bg-orb bg-orb--3" />
+      <div className="bg-grid" />
+    </div>
+  );
+}
+
 function App() {
   return (
     <ConfigProvider
@@ -30,6 +41,7 @@ function App() {
       }}
     >
       <GameProvider>
+        <BackgroundEffects />
         <BrowserRouter>
           <Routes>
             <Route path="/" element={<HomePage />} />
