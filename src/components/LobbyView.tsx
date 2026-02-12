@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import {
   Button,
   Select,
@@ -29,6 +29,7 @@ const { Title, Text } = Typography;
 export default function LobbyView() {
   const {
     gameState,
+    role,
     addPlayer,
     removePlayer,
     startRolling,
@@ -38,10 +39,29 @@ export default function LobbyView() {
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [position, setPosition] = useState<Position>('');
   const [adding, setAdding] = useState(false);
+  const didAutoFillRef = useRef(false);
 
   if (!gameState) return null;
 
   const isWaiting = gameState.status === 'waiting';
+
+  /* Lobi açıldığında (adding_players) listedeki tüm oyuncuları otomatik ekle (bir kez) */
+  useEffect(() => {
+    if (
+      role !== 'host' ||
+      gameState.status !== 'adding_players' ||
+      gameState.players.length > 0 ||
+      didAutoFillRef.current
+    ) {
+      return;
+    }
+    didAutoFillRef.current = true;
+    (async () => {
+      for (const name of PLAYER_NAMES) {
+        await addPlayer(name, '');
+      }
+    })();
+  }, [role, gameState.status, gameState.players.length, addPlayer]);
 
   /* Copy room CODE only */
   const handleCopyCode = () => {
@@ -199,6 +219,11 @@ export default function LobbyView() {
                 value={selectedPlayer}
                 onChange={setSelectedPlayer}
                 allowClear
+                showSearch
+                optionFilterProp="label"
+                filterOption={(input, option) =>
+                  (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
+                }
                 className="add-player-select"
                 disabled={adding}
                 options={playerOptions}
