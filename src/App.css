@@ -1,42 +1,745 @@
-#root {
-  max-width: 1280px;
+/* ================================================
+   KADRONU KUR — Main Styles
+   ================================================ */
+
+/* ---------- Glass Card ---------- */
+.glass-card {
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  backdrop-filter: blur(12px);
+}
+
+/* ---------- Glow Button ---------- */
+.glow-btn {
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+.glow-btn::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: inherit;
+  background: linear-gradient(135deg, #52c41a44, transparent, #52c41a44);
+  z-index: -1;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.glow-btn:hover::after {
+  opacity: 1;
+}
+
+/* ================================================
+   HOME PAGE
+   ================================================ */
+.home-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  position: relative;
+}
+.home-page::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(
+    ellipse at 30% 20%,
+    rgba(82, 196, 26, 0.06) 0%,
+    transparent 50%
+  );
+  pointer-events: none;
+}
+
+.home-content {
+  width: 100%;
+  max-width: 440px;
+  position: relative;
+  z-index: 1;
+}
+
+/* Hero */
+.home-hero {
+  text-align: center;
+  margin-bottom: 32px;
+}
+.home-hero__ball {
+  font-size: 64px;
+  margin-bottom: 8px;
+  animation: ballBounce 2s ease-in-out infinite;
+  display: inline-block;
+}
+.home-hero__title {
+  font-size: 42px !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, #52c41a, #95de64, #52c41a);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3s ease-in-out infinite;
+  margin-bottom: 4px !important;
+}
+.home-hero__subtitle {
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+/* Card */
+.home-card {
+  padding: 8px;
+}
+
+/* Footer */
+.home-footer {
+  display: block;
+  text-align: center;
+  margin-top: 24px;
+  color: rgba(255, 255, 255, 0.3);
+  font-size: 13px;
+}
+
+/* ================================================
+   ROOM PAGE
+   ================================================ */
+.room-page {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.room-header {
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.game-steps {
+  padding: 20px 24px;
+  max-width: 700px;
   margin: 0 auto;
-  padding: 2rem;
+  width: 100%;
+}
+
+.room-content {
+  flex: 1;
+  padding: 0 24px 48px;
+  max-width: 960px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ================================================
+   LOBBY VIEW
+   ================================================ */
+.lobby-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Room Code */
+.room-code-card {
+  text-align: center;
+}
+.room-code-banner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.room-code-display {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Player Status */
+.players-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.player-slot {
+  flex: 1;
+  text-align: center;
+}
+.vs-badge {
+  font-weight: 800;
+  font-size: 18px;
+  color: rgba(255, 255, 255, 0.3);
+  flex-shrink: 0;
+}
+
+/* Simulate Card */
+.simulate-card {
+  border-style: dashed !important;
+  border-color: rgba(250, 173, 20, 0.3) !important;
+}
+
+/* Add Player */
+.add-player-card {
+  /* default */
+}
+.add-player-form {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.add-player-input {
+  flex: 1;
+  min-width: 160px;
+}
+
+/* Player Grid */
+.player-pool {
+  min-height: 80px;
+}
+.player-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+/* Actions */
+.lobby-actions {
+  text-align: center;
+  padding: 8px 0;
+}
+
+/* ================================================
+   PLAYER CARD
+   ================================================ */
+.player-card {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  transition: all 0.2s ease;
+}
+.player-card--selectable {
+  cursor: pointer;
+}
+.player-card--selectable:hover {
+  background: rgba(82, 196, 26, 0.12);
+  border-color: rgba(82, 196, 26, 0.4);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(82, 196, 26, 0.15);
+}
+.player-card--selectable:active {
+  transform: translateY(0);
+}
+.player-card--compact {
+  padding: 8px 12px;
+}
+
+.player-card__inner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.player-card__index {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  flex-shrink: 0;
+}
+
+.player-card__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.player-card--compact .player-card__avatar {
+  width: 30px;
+  height: 30px;
+  font-size: 12px;
+}
+
+.player-card__info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+.player-card__name {
+  font-weight: 600;
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.player-card--compact .player-card__name {
+  font-size: 13px;
+}
+
+.player-card__remove {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(245, 34, 45, 0.15);
+  color: #f5222d;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+.player-card__remove:hover {
+  background: rgba(245, 34, 45, 0.3);
+  transform: scale(1.1);
+}
+
+/* ================================================
+   DICE ROLL VIEW
+   ================================================ */
+.dice-roll-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
+  padding-top: 16px;
+}
+
+.dice-header {
+  text-align: center;
+}
+.dice-header__emoji {
+  font-size: 48px;
+  display: block;
+  margin-bottom: 8px;
+  animation: diceShake 1.5s ease-in-out infinite;
+}
+
+/* Arena */
+.dice-arena {
+  display: flex;
+  align-items: center;
+  gap: 32px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.dice-side {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  min-width: 160px;
+}
+.dice-side__name {
+  margin: 0 !important;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.dice-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 150px;
 }
 
-@keyframes logo-spin {
-  from {
+/* VS */
+.dice-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dice-vs__text {
+  font-size: 36px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.15);
+  letter-spacing: 0.1em;
+}
+
+/* Dice value */
+.dice-value {
+  font-size: 32px;
+  font-weight: 900;
+  color: #faad14;
+  text-shadow: 0 0 20px rgba(250, 173, 20, 0.4);
+}
+
+/* Roll button */
+.roll-btn {
+  min-width: 130px;
+  font-weight: 600;
+  animation: pulseGlow 2s ease-in-out infinite;
+}
+
+/* Dice animations */
+.dice-face {
+  transition: transform 0.15s ease, box-shadow 0.3s ease;
+}
+.dice-rolling {
+  animation: diceRoll 0.15s ease-in-out infinite alternate;
+}
+.dice-settled {
+  animation: dicePop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* Result banners */
+.dice-result-banner {
+  text-align: center;
+  padding: 24px;
+  border-radius: 16px;
+  animation: fadeSlideUp 0.5s ease-out;
+}
+.winner-banner {
+  background: linear-gradient(
+    135deg,
+    rgba(82, 196, 26, 0.12),
+    rgba(250, 173, 20, 0.08)
+  );
+  border: 1px solid rgba(82, 196, 26, 0.2);
+}
+.tie-banner {
+  background: rgba(250, 173, 20, 0.08);
+  border: 1px solid rgba(250, 173, 20, 0.2);
+}
+
+/* ================================================
+   DRAFT VIEW
+   ================================================ */
+.draft-view {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Turn Banner */
+.turn-banner {
+  text-align: center;
+  padding: 16px 24px;
+  border-radius: 16px;
+  animation: pulseBorder 2s ease-in-out infinite;
+}
+.turn-banner--host {
+  background: linear-gradient(135deg, rgba(82, 196, 26, 0.1), rgba(82, 196, 26, 0.04));
+  border: 1px solid rgba(82, 196, 26, 0.3);
+  box-shadow: 0 0 30px rgba(82, 196, 26, 0.08);
+}
+.turn-banner--guest {
+  background: linear-gradient(135deg, rgba(24, 144, 255, 0.1), rgba(24, 144, 255, 0.04));
+  border: 1px solid rgba(24, 144, 255, 0.3);
+  box-shadow: 0 0 30px rgba(24, 144, 255, 0.08);
+}
+.turn-banner__content {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.turn-banner__icon {
+  font-size: 20px;
+}
+
+/* Draft Layout */
+.draft-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 16px;
+  align-items: start;
+}
+
+/* Team Panel */
+.team-panel {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 16px;
+  min-height: 300px;
+  transition: all 0.4s ease;
+}
+.team-panel--active {
+  border-color: rgba(82, 196, 26, 0.4);
+  box-shadow: 0 0 24px rgba(82, 196, 26, 0.1);
+  background: rgba(82, 196, 26, 0.04);
+}
+.team-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+.team-panel__list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.team-panel__empty {
+  display: block;
+  text-align: center;
+  padding: 32px 0;
+}
+
+/* Draft Pool */
+.draft-pool {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 16px;
+  padding: 16px;
+}
+.draft-pool__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+  gap: 8px;
+}
+
+/* ================================================
+   RESULT VIEW
+   ================================================ */
+.result-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding-top: 16px;
+}
+
+.result-header {
+  text-align: center;
+  animation: fadeSlideUp 0.6s ease-out;
+}
+.result-header__trophy {
+  font-size: 64px;
+  margin-bottom: 8px;
+  animation: trophyBounce 1s ease-in-out;
+  display: inline-block;
+}
+
+.result-teams {
+  display: flex;
+  align-items: start;
+  gap: 24px;
+  width: 100%;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.result-team-card {
+  flex: 1;
+  min-width: 260px;
+  max-width: 380px;
+  animation: fadeSlideUp 0.6s ease-out;
+}
+.result-team-card:nth-child(3) {
+  animation-delay: 0.2s;
+}
+.result-team__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.result-team__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.result-vs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-top: 48px;
+}
+.result-vs span {
+  font-size: 28px;
+  font-weight: 900;
+  color: rgba(255, 255, 255, 0.12);
+}
+
+.result-actions {
+  padding: 8px 0 24px;
+}
+
+/* ================================================
+   ANIMATIONS
+   ================================================ */
+@keyframes ballBounce {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: 0% center;
+  }
+}
+
+@keyframes diceShake {
+  0%,
+  100% {
     transform: rotate(0deg);
   }
-  to {
-    transform: rotate(360deg);
+  25% {
+    transform: rotate(8deg);
+  }
+  75% {
+    transform: rotate(-8deg);
   }
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+@keyframes diceRoll {
+  0% {
+    transform: rotate(-4deg) scale(0.98);
+  }
+  100% {
+    transform: rotate(4deg) scale(1.02);
   }
 }
 
-.card {
-  padding: 2em;
+@keyframes dicePop {
+  0% {
+    transform: scale(0.8);
+    opacity: 0.7;
+  }
+  50% {
+    transform: scale(1.08);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
-.read-the-docs {
-  color: #888;
+@keyframes pulseGlow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(82, 196, 26, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(82, 196, 26, 0.2);
+  }
+}
+
+@keyframes pulseBorder {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@keyframes fadeSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes trophyBounce {
+  0% {
+    transform: scale(0) rotate(-20deg);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2) rotate(5deg);
+  }
+  70% {
+    transform: scale(0.95) rotate(-2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+    opacity: 1;
+  }
+}
+
+/* ================================================
+   RESPONSIVE
+   ================================================ */
+@media (max-width: 768px) {
+  .draft-layout {
+    grid-template-columns: 1fr;
+  }
+  .team-panel {
+    min-height: auto;
+  }
+  .dice-arena {
+    gap: 16px;
+  }
+  .dice-vs__text {
+    font-size: 24px;
+  }
+  .players-status {
+    flex-direction: column;
+  }
+  .vs-badge {
+    margin: -4px 0;
+  }
+  .result-teams {
+    flex-direction: column;
+    align-items: center;
+  }
+  .result-vs {
+    padding-top: 0;
+  }
+  .home-hero__title {
+    font-size: 32px !important;
+  }
+  .room-content {
+    padding: 0 16px 32px;
+  }
+  .game-steps {
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .add-player-form {
+    flex-direction: column;
+  }
+  .add-player-input {
+    min-width: 100%;
+  }
+  .draft-pool__grid {
+    grid-template-columns: 1fr;
+  }
 }

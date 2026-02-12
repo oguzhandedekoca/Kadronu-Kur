@@ -1,0 +1,121 @@
+import { Typography, Badge, Empty } from 'antd';
+import { useGame } from '../context/GameContext';
+import PlayerCard from './PlayerCard';
+
+const { Title, Text } = Typography;
+
+export default function DraftView() {
+  const { gameState, pickPlayer } = useGame();
+
+  if (!gameState) return null;
+
+  const currentName =
+    gameState.currentTurn === 'host'
+      ? gameState.host.name
+      : gameState.guest?.name;
+
+  const totalPicked = gameState.hostTeam.length + gameState.guestTeam.length;
+  const totalPlayers = totalPicked + gameState.players.length;
+
+  return (
+    <div className="draft-view">
+      {/* Turn banner */}
+      <div className={`turn-banner turn-banner--${gameState.currentTurn}`}>
+        <div className="turn-banner__content">
+          <span className="turn-banner__icon">
+            {gameState.currentTurn === 'host' ? '🟢' : '🔵'}
+          </span>
+          <Title level={3} style={{ margin: 0, color: '#fff' }}>
+            {currentName} seçiyor...
+          </Title>
+        </div>
+        <Text style={{ color: 'rgba(255,255,255,0.7)' }}>
+          Seçim {totalPicked + 1} / {totalPlayers}
+        </Text>
+      </div>
+
+      <div className="draft-layout">
+        {/* Host team */}
+        <div
+          className={`team-panel ${gameState.currentTurn === 'host' ? 'team-panel--active' : ''}`}
+        >
+          <div className="team-panel__header">
+            <Title level={4} style={{ margin: 0 }}>
+              {gameState.host.name}
+            </Title>
+            <Badge
+              count={gameState.hostTeam.length}
+              showZero
+              style={{ backgroundColor: '#52c41a' }}
+            />
+          </div>
+          <div className="team-panel__list">
+            {gameState.hostTeam.length === 0 ? (
+              <Text type="secondary" className="team-panel__empty">
+                Henüz oyuncu yok
+              </Text>
+            ) : (
+              gameState.hostTeam.map((p, idx) => (
+                <PlayerCard key={p.id} player={p} index={idx} compact />
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Available pool */}
+        <div className="draft-pool">
+          <Title
+            level={4}
+            style={{ textAlign: 'center', marginTop: 0, marginBottom: 16 }}
+          >
+            Oyuncu Havuzu
+          </Title>
+          {gameState.players.length === 0 ? (
+            <Empty
+              description="Tüm oyuncular seçildi!"
+              image={Empty.PRESENTED_IMAGE_SIMPLE}
+            />
+          ) : (
+            <div className="draft-pool__grid">
+              {gameState.players.map((p) => (
+                <PlayerCard
+                  key={p.id}
+                  player={p}
+                  selectable
+                  onClick={() => pickPlayer(p.id)}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Guest team */}
+        <div
+          className={`team-panel ${gameState.currentTurn === 'guest' ? 'team-panel--active' : ''}`}
+        >
+          <div className="team-panel__header">
+            <Title level={4} style={{ margin: 0 }}>
+              {gameState.guest?.name}
+            </Title>
+            <Badge
+              count={gameState.guestTeam.length}
+              showZero
+              style={{ backgroundColor: '#1890ff' }}
+            />
+          </div>
+          <div className="team-panel__list">
+            {gameState.guestTeam.length === 0 ? (
+              <Text type="secondary" className="team-panel__empty">
+                Henüz oyuncu yok
+              </Text>
+            ) : (
+              gameState.guestTeam.map((p, idx) => (
+                <PlayerCard key={p.id} player={p} index={idx} compact />
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
