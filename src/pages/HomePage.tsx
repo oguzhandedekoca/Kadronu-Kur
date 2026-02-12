@@ -23,7 +23,8 @@ export default function HomePage() {
     try {
       const roomId = await createRoom(name.trim());
       navigate(`/room/${roomId}`);
-    } catch {
+    } catch (err) {
+      console.error('Room create error:', err);
       message.error('Oda oluşturulamadı! Firebase bağlantısını kontrol et.');
     } finally {
       setBusy(false);
