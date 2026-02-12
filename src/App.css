@@ -239,7 +239,8 @@
   gap: 8px;
   flex-wrap: wrap;
 }
-.add-player-input {
+.add-player-input,
+.add-player-select {
   flex: 1;
   min-width: 160px;
 }

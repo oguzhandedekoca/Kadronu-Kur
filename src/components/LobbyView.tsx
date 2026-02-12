@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import {
-  Input,
   Button,
   Select,
   Card,
@@ -22,6 +21,7 @@ import {
 import { useGame } from '../context/GameContext';
 import type { Position } from '../types';
 import { POSITION_LABELS } from '../types';
+import { PLAYER_NAMES } from '../constants/playerNames';
 import PlayerCard from './PlayerCard';
 
 const { Title, Text } = Typography;
@@ -35,7 +35,7 @@ export default function LobbyView() {
     approveJoinRequest,
     denyJoinRequest,
   } = useGame();
-  const [playerName, setPlayerName] = useState('');
+  const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
   const [position, setPosition] = useState<Position>('');
   const [adding, setAdding] = useState(false);
 
@@ -50,14 +50,14 @@ export default function LobbyView() {
   };
 
   const handleAddPlayer = async () => {
-    if (!playerName.trim()) {
-      message.warning('Oyuncu adı gir!');
+    if (!selectedPlayer) {
+      message.warning('Oyuncu seç!');
       return;
     }
     setAdding(true);
     try {
-      await addPlayer(playerName.trim(), position);
-      setPlayerName('');
+      await addPlayer(selectedPlayer, position);
+      setSelectedPlayer(null);
       setPosition('');
     } catch {
       message.error('Oyuncu eklenemedi!');
@@ -91,6 +91,11 @@ export default function LobbyView() {
   };
 
   const canProceed = gameState.guest && gameState.players.length >= 2;
+
+  const addedNames = new Set(gameState.players.map((p) => p.name));
+  const playerOptions = PLAYER_NAMES.filter((name) => !addedNames.has(name)).map(
+    (name) => ({ value: name, label: name }),
+  );
 
   return (
     <div className="lobby-view">
@@ -189,13 +194,15 @@ export default function LobbyView() {
               Oyuncuları Ekle
             </Title>
             <div className="add-player-form">
-              <Input
-                placeholder="Oyuncu adı"
-                value={playerName}
-                onChange={(e) => setPlayerName(e.target.value)}
-                onPressEnter={handleAddPlayer}
-                className="add-player-input"
+              <Select
+                placeholder="Oyuncu seç"
+                value={selectedPlayer}
+                onChange={setSelectedPlayer}
+                allowClear
+                className="add-player-select"
                 disabled={adding}
+                options={playerOptions}
+                style={{ minWidth: 160 }}
               />
               <Select
                 placeholder="Mevki"
