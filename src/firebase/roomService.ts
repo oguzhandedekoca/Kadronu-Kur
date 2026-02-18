@@ -99,6 +99,22 @@ export async function removePlayer(
   });
 }
 
+export async function updatePlayerPosition(
+  roomId: string,
+  playerId: string,
+  position: PlayerInfo['position'],
+): Promise<void> {
+  const ref = roomRef(roomId);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const data = snap.data();
+  const players = (data.players || []) as PlayerInfo[];
+  const next = players.map((p) =>
+    p.id === playerId ? { ...p, position } : p,
+  );
+  await updateDoc(ref, { players: next });
+}
+
 // --------------- Game phases ---------------
 
 export async function startRolling(roomId: string): Promise<void> {

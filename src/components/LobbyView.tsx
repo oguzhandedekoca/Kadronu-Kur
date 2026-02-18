@@ -34,6 +34,7 @@ export default function LobbyView() {
     role,
     addPlayer,
     removePlayer,
+    updatePlayerPosition,
     startRolling,
     approveJoinRequest,
     denyJoinRequest,
@@ -383,6 +384,8 @@ export default function LobbyView() {
                     player={p}
                     showRemove
                     onRemove={() => removePlayer(p.id)}
+                    showPositionSelect
+                    onPositionChange={updatePlayerPosition}
                   />
                 ))}
               </div>

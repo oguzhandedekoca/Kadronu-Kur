@@ -29,6 +29,7 @@ interface GameContextType {
   /* game actions — all write to Firestore */
   addPlayer: (name: string, position: Position) => Promise<void>;
   removePlayer: (id: string) => Promise<void>;
+  updatePlayerPosition: (playerId: string, position: Position) => Promise<void>;
   startRolling: () => Promise<void>;
   rollDice: (value: number) => Promise<void>;
   resetDice: () => Promise<void>;
@@ -156,6 +157,14 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
     [gameState],
   );
 
+  const updatePlayerPosition = useCallback(
+    async (playerId: string, position: Position) => {
+      if (!gameState) return;
+      await svc.updatePlayerPosition(gameState.roomId, playerId, position);
+    },
+    [gameState],
+  );
+
   const startRolling = useCallback(async () => {
     if (!gameState) return;
     await svc.startRolling(gameState.roomId);
@@ -220,6 +229,7 @@ export function GameProvider({ children }: { children: React.ReactNode }) {
         subscribeToRoom,
         addPlayer,
         removePlayer,
+        updatePlayerPosition,
         startRolling,
         rollDice,
         resetDice,

@@ -1,6 +1,6 @@
-import { Tag } from 'antd';
+import { Tag, Select } from 'antd';
 import { CloseOutlined, CrownOutlined } from '@ant-design/icons';
-import type { PlayerInfo } from '../types';
+import type { PlayerInfo, Position } from '../types';
 import { POSITION_COLORS, POSITION_LABELS } from '../types';
 
 interface PlayerCardProps {
@@ -12,6 +12,9 @@ interface PlayerCardProps {
   onRemove?: () => void;
   compact?: boolean;
   isCaptain?: boolean;
+  /** Lobi: tıklayınca mevki seçimi (tek tek mevki atama) */
+  showPositionSelect?: boolean;
+  onPositionChange?: (playerId: string, position: Position) => void;
 }
 
 export default function PlayerCard({
@@ -23,6 +26,8 @@ export default function PlayerCard({
   onRemove,
   compact = false,
   isCaptain = false,
+  showPositionSelect = false,
+  onPositionChange,
 }: PlayerCardProps) {
   const posColor = player.position
     ? POSITION_COLORS[player.position]
@@ -65,13 +70,30 @@ export default function PlayerCard({
               <span style={{ color: '#faad14', fontSize: 10, marginLeft: 4 }}>(K)</span>
             )}
           </span>
-          {player.position && (
+          {player.position && !showPositionSelect && (
             <Tag
               color={posColor}
               style={{ margin: 0, fontSize: 10, lineHeight: '18px', padding: '0 6px' }}
             >
               {POSITION_LABELS[player.position]}
             </Tag>
+          )}
+          {showPositionSelect && onPositionChange && (
+            <Select
+              size="small"
+              placeholder="Mevki"
+              value={player.position || undefined}
+              onChange={(v) => onPositionChange(player.id, v ?? '')}
+              allowClear
+              options={[
+                { value: 'GK', label: POSITION_LABELS['GK'] },
+                { value: 'DEF', label: POSITION_LABELS['DEF'] },
+                { value: 'MID', label: POSITION_LABELS['MID'] },
+                { value: 'FWD', label: POSITION_LABELS['FWD'] },
+              ]}
+              style={{ width: 90, marginTop: 4 }}
+              onClick={(e) => e.stopPropagation()}
+            />
           )}
         </div>
         {showRemove && onRemove && (
