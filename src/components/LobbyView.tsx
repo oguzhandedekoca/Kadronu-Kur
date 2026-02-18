@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef } from "react";
 import {
   Button,
   Select,
@@ -10,7 +10,7 @@ import {
   message,
   Tooltip,
   Tag,
-} from 'antd';
+} from "antd";
 import {
   PlusOutlined,
   CopyOutlined,
@@ -19,12 +19,12 @@ import {
   CloseOutlined,
   DeleteOutlined,
   TeamOutlined,
-} from '@ant-design/icons';
-import { useGame } from '../context/GameContext';
-import type { Position } from '../types';
-import { POSITION_LABELS } from '../types';
-import { PLAYER_NAMES } from '../constants/playerNames';
-import PlayerCard from './PlayerCard';
+} from "@ant-design/icons";
+import { useGame } from "../context/GameContext";
+import type { Position } from "../types";
+import { POSITION_LABELS } from "../types";
+import { PLAYER_NAMES } from "../constants/playerNames";
+import PlayerCard from "./PlayerCard";
 
 const { Title, Text } = Typography;
 
@@ -39,54 +39,62 @@ export default function LobbyView() {
     denyJoinRequest,
   } = useGame();
   const [selectedPlayer, setSelectedPlayer] = useState<string | null>(null);
-  const [position, setPosition] = useState<Position>('');
+  const [searchValue, setSearchValue] = useState("");
+  const [position, setPosition] = useState<Position>("");
   const [adding, setAdding] = useState(false);
-  const [bulkLoading, setBulkLoading] = useState<'add' | 'remove' | null>(null);
+  const [bulkLoading, setBulkLoading] = useState<"add" | "remove" | null>(null);
   const prevStatusRef = useRef<string | null>(null);
 
-  if (!gameState) return null;
-
-  const isWaiting = gameState.status === 'waiting';
-
   /* Sadece waiting → adding_players geçişinde (misafir katıldığında) tüm oyuncuları ekle.
-   * "Tümünü sil" sonrası liste boş kaldığında tekrar tetiklenmez. */
+   * Hook'lar early return'den önce çağrılmalı. */
   useEffect(() => {
+    if (!gameState) return;
     const prev = prevStatusRef.current;
     prevStatusRef.current = gameState.status;
 
     const justEnteredLobby =
-      role === 'host' &&
-      prev === 'waiting' &&
-      gameState.status === 'adding_players' &&
+      role === "host" &&
+      prev === "waiting" &&
+      gameState.status === "adding_players" &&
       gameState.players.length === 0;
 
     if (!justEnteredLobby) return;
 
     (async () => {
       for (const name of PLAYER_NAMES) {
-        await addPlayer(name, '');
+        await addPlayer(name, "");
       }
     })();
-  }, [role, gameState.status, gameState.players.length, addPlayer]);
+  }, [role, gameState, addPlayer]);
+
+  if (!gameState) return null;
+
+  const isWaiting = gameState.status === "waiting";
 
   /* Copy room CODE only */
   const handleCopyCode = () => {
     navigator.clipboard.writeText(gameState.roomId);
-    message.success('Oda kodu kopyalandı!');
+    message.success("Oda kodu kopyalandı!");
   };
 
   const handleAddPlayer = async () => {
-    if (!selectedPlayer) {
-      message.warning('Oyuncu seç!');
+    const nameToAdd = selectedPlayer?.trim();
+    if (!nameToAdd) {
+      message.warning("Oyuncu seç veya isim yazıp listeden ekle!");
+      return;
+    }
+    if (gameState.players.some((p) => p.name === nameToAdd)) {
+      message.warning("Bu isim zaten listede.");
       return;
     }
     setAdding(true);
     try {
-      await addPlayer(selectedPlayer, position);
+      await addPlayer(nameToAdd, position);
       setSelectedPlayer(null);
-      setPosition('');
+      setSearchValue("");
+      setPosition("");
     } catch {
-      message.error('Oyuncu eklenemedi!');
+      message.error("Oyuncu eklenemedi!");
     }
     setAdding(false);
   };
@@ -95,16 +103,16 @@ export default function LobbyView() {
     try {
       await startRolling();
     } catch {
-      message.error('Bir hata oluştu!');
+      message.error("Bir hata oluştu!");
     }
   };
 
   const handleApprove = async () => {
     try {
       await approveJoinRequest();
-      message.success('Oyuncu onaylandı!');
+      message.success("Oyuncu onaylandı!");
     } catch {
-      message.error('Hata!');
+      message.error("Hata!");
     }
   };
 
@@ -112,7 +120,7 @@ export default function LobbyView() {
     try {
       await denyJoinRequest();
     } catch {
-      message.error('Hata!');
+      message.error("Hata!");
     }
   };
 
@@ -121,34 +129,34 @@ export default function LobbyView() {
       (name) => !gameState.players.some((p) => p.name === name),
     );
     if (toAdd.length === 0) {
-      message.info('Zaten hepsi listede.');
+      message.info("Zaten hepsi listede.");
       return;
     }
-    setBulkLoading('add');
+    setBulkLoading("add");
     try {
       for (const name of toAdd) {
-        await addPlayer(name, '');
+        await addPlayer(name, "");
       }
       message.success(`${toAdd.length} oyuncu eklendi.`);
     } catch {
-      message.error('Eklenemedi!');
+      message.error("Eklenemedi!");
     }
     setBulkLoading(null);
   };
 
   const handleRemoveAll = async () => {
     if (gameState.players.length === 0) {
-      message.info('Liste zaten boş.');
+      message.info("Liste zaten boş.");
       return;
     }
-    setBulkLoading('remove');
+    setBulkLoading("remove");
     try {
       for (const p of [...gameState.players]) {
         await removePlayer(p.id);
       }
-      message.success('Tüm oyuncular silindi.');
+      message.success("Tüm oyuncular silindi.");
     } catch {
-      message.error('Silinemedi!');
+      message.error("Silinemedi!");
     }
     setBulkLoading(null);
   };
@@ -156,9 +164,22 @@ export default function LobbyView() {
   const canProceed = gameState.guest && gameState.players.length >= 2;
 
   const addedNames = new Set(gameState.players.map((p) => p.name));
-  const playerOptions = PLAYER_NAMES.filter((name) => !addedNames.has(name)).map(
-    (name) => ({ value: name, label: name }),
-  );
+  const basePlayerOptions = PLAYER_NAMES.filter(
+    (name) => !addedNames.has(name),
+  ).map((name) => ({ value: name, label: name }));
+  const search = searchValue.trim().toLowerCase();
+  const playerOptions = search
+    ? basePlayerOptions.filter((opt) =>
+        (opt.label as string).toLowerCase().includes(search),
+      )
+    : basePlayerOptions;
+  const customOption =
+    search &&
+    !addedNames.has(searchValue.trim()) &&
+    !basePlayerOptions.some((o) => o.value === searchValue.trim())
+      ? [{ value: searchValue.trim(), label: `"${searchValue.trim()}" ekle` }]
+      : [];
+  const allPlayerOptions = [...playerOptions, ...customOption];
 
   return (
     <div className="lobby-view">
@@ -168,7 +189,7 @@ export default function LobbyView() {
           <div className="room-code-banner">
             <Text type="secondary">Oda Kodu</Text>
             <div className="room-code-display">
-              <Title level={2} style={{ margin: 0, letterSpacing: '0.3em' }}>
+              <Title level={2} style={{ margin: 0, letterSpacing: "0.3em" }}>
                 {gameState.roomId}
               </Title>
               <Tooltip title="Kodu Kopyala">
@@ -190,11 +211,11 @@ export default function LobbyView() {
               ⚡ Eşleşme sağlandı!
             </Text>
             <div className="match-banner__names">
-              <Text strong style={{ color: '#52c41a', fontSize: 18 }}>
+              <Text strong style={{ color: "#52c41a", fontSize: 18 }}>
                 {gameState.host.name}
               </Text>
               <span className="match-banner__vs">VS</span>
-              <Text strong style={{ color: '#1890ff', fontSize: 18 }}>
+              <Text strong style={{ color: "#1890ff", fontSize: 18 }}>
                 {gameState.guest?.name}
               </Text>
             </div>
@@ -218,7 +239,7 @@ export default function LobbyView() {
         <div className="vs-badge">VS</div>
         <Card className="glass-card player-slot">
           <Space>
-            <Badge status={gameState.guest ? 'success' : 'processing'} />
+            <Badge status={gameState.guest ? "success" : "processing"} />
             <UserOutlined />
             {gameState.guest ? (
               <>
@@ -233,7 +254,7 @@ export default function LobbyView() {
       </div>
 
       {/* Join Request Banner */}
-      {gameState.joinRequest?.status === 'pending' && (
+      {gameState.joinRequest?.status === "pending" && (
         <Card className="glass-card join-request-card">
           <div className="join-request-card__inner">
             <div>
@@ -264,7 +285,7 @@ export default function LobbyView() {
 
       {/* Waiting */}
       {isWaiting && !gameState.joinRequest && (
-        <Card className="glass-card" style={{ textAlign: 'center' }}>
+        <Card className="glass-card" style={{ textAlign: "center" }}>
           <Text type="secondary">
             Rakibinin katılmasını bekliyorsun... Kodu paylaş!
           </Text>
@@ -280,19 +301,26 @@ export default function LobbyView() {
             </Title>
             <div className="add-player-form">
               <Select
-                placeholder="Oyuncu seç"
+                placeholder="Oyuncu seç veya isim yaz (örn. Ahmet)"
                 value={selectedPlayer}
-                onChange={setSelectedPlayer}
+                onChange={(v) => {
+                  setSelectedPlayer(v);
+                  setSearchValue("");
+                }}
+                searchValue={searchValue}
+                onSearch={setSearchValue}
                 allowClear
                 showSearch
-                optionFilterProp="label"
-                filterOption={(input, option) =>
-                  (option?.label ?? '').toString().toLowerCase().includes(input.toLowerCase())
-                }
+                filterOption={false}
                 className="add-player-select"
                 disabled={adding}
-                options={playerOptions}
-                style={{ minWidth: 160 }}
+                options={allPlayerOptions}
+                style={{ minWidth: 200 }}
+                notFoundContent={
+                  searchValue
+                    ? `"${searchValue.trim()}" eklemek için yukarıdaki seçeneği tıkla`
+                    : "Oyuncu bulunamadı"
+                }
               />
               <Select
                 placeholder="Mevki"
@@ -301,10 +329,10 @@ export default function LobbyView() {
                 allowClear
                 style={{ width: 140 }}
                 options={[
-                  { value: 'GK', label: POSITION_LABELS['GK'] },
-                  { value: 'DEF', label: POSITION_LABELS['DEF'] },
-                  { value: 'MID', label: POSITION_LABELS['MID'] },
-                  { value: 'FWD', label: POSITION_LABELS['FWD'] },
+                  { value: "GK", label: POSITION_LABELS["GK"] },
+                  { value: "DEF", label: POSITION_LABELS["DEF"] },
+                  { value: "MID", label: POSITION_LABELS["MID"] },
+                  { value: "FWD", label: POSITION_LABELS["FWD"] },
                 ]}
               />
               <Button
@@ -320,8 +348,10 @@ export default function LobbyView() {
               <Button
                 icon={<TeamOutlined />}
                 onClick={handleAddAll}
-                loading={bulkLoading === 'add'}
-                disabled={bulkLoading !== null || playerOptions.length === 0}
+                loading={bulkLoading === "add"}
+                disabled={
+                  bulkLoading !== null || basePlayerOptions.length === 0
+                }
               >
                 Tümünü ekle
               </Button>
@@ -329,8 +359,10 @@ export default function LobbyView() {
                 danger
                 icon={<DeleteOutlined />}
                 onClick={handleRemoveAll}
-                loading={bulkLoading === 'remove'}
-                disabled={bulkLoading !== null || gameState.players.length === 0}
+                loading={bulkLoading === "remove"}
+                disabled={
+                  bulkLoading !== null || gameState.players.length === 0
+                }
               >
                 Tümünü sil
               </Button>
@@ -371,14 +403,14 @@ export default function LobbyView() {
               <Text
                 type="secondary"
                 style={{
-                  textAlign: 'center',
-                  display: 'block',
+                  textAlign: "center",
+                  display: "block",
                   marginTop: 8,
                 }}
               >
                 {!gameState.guest
-                  ? 'Rakibin katılmasını bekle'
-                  : 'En az 2 oyuncu ekle'}
+                  ? "Rakibin katılmasını bekle"
+                  : "En az 2 oyuncu ekle"}
               </Text>
             )}
           </div>

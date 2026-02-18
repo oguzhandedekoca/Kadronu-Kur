@@ -6,8 +6,8 @@ export const PLAYER_NAMES = [
   "Oğuzhan",
   "Emin",
   "Adil",
-  "Burak",
-  "İhsan",
+  "Devlet",
+  "Ümit",
   "Serkan",
   "Mehmet",
   "Agah",
@@ -15,7 +15,7 @@ export const PLAYER_NAMES = [
   "Dinç",
   "Ayberk",
   "Erdem",
-  "Furkan",
+  "Sezer",
   "Hakan",
 ] as const;
 
