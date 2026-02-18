@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Input,
@@ -30,6 +30,10 @@ export default function HomePage() {
   const [busy, setBusy] = useState(false);
   const { createRoom, joinRoom } = useGame();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    document.title = "Kadronu Kur";
+  }, []);
 
   const handleCreate = async () => {
     if (!name.trim()) {
@@ -74,7 +78,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="home-page">
+    <main id="main-content" className="home-page">
       <div className="home-content" style={{ maxWidth: 520 }}>
         {/* Hero */}
         <div className="home-hero">
@@ -194,9 +198,9 @@ export default function HomePage() {
         </div>
 
         <Text className="home-footer">
-          Halısaha & Spor Karşılaşmaları İçin Kadro Seçim Uygulaması
+          Halısaha & spor karşılaşmaları için kadro seçim uygulaması
         </Text>
       </div>
-    </div>
+    </main>
   );
 }

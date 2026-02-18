@@ -43,6 +43,9 @@ function App() {
       <GameProvider>
         <BackgroundEffects />
         <BrowserRouter>
+          <a href="#main-content" className="skip-link">
+            İçeriğe atla
+          </a>
           <Routes>
             <Route path="/" element={<HomePage />} />
             <Route path="/room/:roomId" element={<RoomPage />} />

@@ -50,6 +50,13 @@ export default function RoomPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [roomId]);
 
+  useEffect(() => {
+    document.title = roomId ? `Oda ${roomId} - Kadronu Kur` : 'Kadronu Kur';
+    return () => {
+      document.title = 'Kadronu Kur';
+    };
+  }, [roomId]);
+
   // --- Detect pending join-request approval ---
   const isPending =
     roomId != null &&
@@ -245,7 +252,7 @@ export default function RoomPage() {
   };
 
   return (
-    <div className="room-page">
+    <main id="main-content" className="room-page">
       <header className="room-header">
         <Title level={4} style={{ margin: 0 }}>
           ⚽ Kadronu Kur
@@ -264,6 +271,6 @@ export default function RoomPage() {
         />
       </div>
       <div className="room-content">{renderView()}</div>
-    </div>
+    </main>
   );
 }
