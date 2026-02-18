@@ -639,6 +639,29 @@
   grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
   gap: 8px;
 }
+.draft-pool__card-wrap {
+  min-height: 0;
+}
+.draft-pool__card-wrap--draggable {
+  cursor: grab;
+}
+.draft-pool__card-wrap--draggable:active {
+  cursor: grabbing;
+}
+.team-panel--drop-target {
+  min-height: 120px;
+  border: 2px dashed transparent;
+  border-radius: 12px;
+  transition: border-color 0.2s, background 0.2s;
+}
+.team-panel--drop-target.team-panel--drag-over {
+  border-color: rgba(82, 196, 26, 0.5);
+  background: rgba(82, 196, 26, 0.08);
+}
+.team-panel--drop-target.team-panel--guest.team-panel--drag-over {
+  border-color: rgba(24, 144, 255, 0.5);
+  background: rgba(24, 144, 255, 0.08);
+}
 
 /* ================================================
    RESULT VIEW

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { Typography, Badge, Empty, message, Progress } from 'antd';
 import { useGame } from '../context/GameContext';
 import PlayerCard from './PlayerCard';
@@ -6,6 +7,8 @@ const { Title, Text } = Typography;
 
 export default function DraftView() {
   const { gameState, role, pickPlayer } = useGame();
+  const [dragOverHost, setDragOverHost] = useState(false);
+  const [dragOverGuest, setDragOverGuest] = useState(false);
 
   if (!gameState) return null;
 
@@ -25,11 +28,53 @@ export default function DraftView() {
       message.warning('Sıra sende değil!');
       return;
     }
+    const stillInPool = gameState.players.some((p) => p.id === playerId);
+    if (!stillInPool) {
+      message.warning('Bu oyuncu zaten seçildi.');
+      return;
+    }
     try {
       await pickPlayer(playerId);
     } catch {
       message.error('Seçim yapılamadı!');
     }
+  };
+
+  const DRAG_KEY = 'draft-player-id';
+
+  const handleDragStart = (e: React.DragEvent, playerId: string) => {
+    if (!isMyTurn) return;
+    e.dataTransfer.setData(DRAG_KEY, playerId);
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
+  const handleDropOnTeam = (e: React.DragEvent, teamRole: 'host' | 'guest') => {
+    e.preventDefault();
+    handleDropEnd(teamRole);
+    if (!isMyTurn || role !== teamRole) return;
+    const playerId = e.dataTransfer.getData(DRAG_KEY);
+    if (!playerId) return;
+    handlePick(playerId);
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+  };
+  const handleDragEnter = (team: 'host' | 'guest') => {
+    if (team === 'host') setDragOverHost(true);
+    else setDragOverGuest(true);
+  };
+  const handleDragLeave = (e: React.DragEvent, team: 'host' | 'guest') => {
+    const related = e.relatedTarget as Node | null;
+    if (!e.currentTarget.contains(related)) {
+      if (team === 'host') setDragOverHost(false);
+      else setDragOverGuest(false);
+    }
+  };
+  const handleDropEnd = (team: 'host' | 'guest') => {
+    if (team === 'host') setDragOverHost(false);
+    else setDragOverGuest(false);
   };
 
   return (
@@ -65,7 +110,11 @@ export default function DraftView() {
       <div className="draft-layout">
         {/* Host team */}
         <div
-          className={`team-panel ${gameState.currentTurn === 'host' ? 'team-panel--active team-panel--host' : ''}`}
+          className={`team-panel ${gameState.currentTurn === 'host' ? 'team-panel--active team-panel--host' : ''} ${role === 'host' && isMyTurn ? 'team-panel--drop-target' : ''} ${dragOverHost ? 'team-panel--drag-over' : ''}`}
+          onDragOver={handleDragOver}
+          onDragEnter={() => handleDragEnter('host')}
+          onDragLeave={(e) => handleDragLeave(e, 'host')}
+          onDrop={(e) => handleDropOnTeam(e, 'host')}
         >
           <div className="team-panel__header">
             <div className="team-panel__title">
@@ -109,12 +158,18 @@ export default function DraftView() {
           ) : (
             <div className="draft-pool__grid">
               {gameState.players.map((p) => (
-                <PlayerCard
+                <div
                   key={p.id}
-                  player={p}
-                  selectable={isMyTurn}
-                  onClick={() => handlePick(p.id)}
-                />
+                  className={`draft-pool__card-wrap ${isMyTurn ? 'draft-pool__card-wrap--draggable' : ''}`}
+                  draggable={isMyTurn}
+                  onDragStart={(e) => handleDragStart(e, p.id)}
+                >
+                  <PlayerCard
+                    player={p}
+                    selectable={isMyTurn}
+                    onClick={() => handlePick(p.id)}
+                  />
+                </div>
               ))}
             </div>
           )}
@@ -122,7 +177,11 @@ export default function DraftView() {
 
         {/* Guest team */}
         <div
-          className={`team-panel ${gameState.currentTurn === 'guest' ? 'team-panel--active team-panel--guest' : ''}`}
+          className={`team-panel ${gameState.currentTurn === 'guest' ? 'team-panel--active team-panel--guest' : ''} ${role === 'guest' && isMyTurn ? 'team-panel--drop-target' : ''} ${dragOverGuest ? 'team-panel--drag-over' : ''}`}
+          onDragOver={handleDragOver}
+          onDragEnter={() => handleDragEnter('guest')}
+          onDragLeave={(e) => handleDragLeave(e, 'guest')}
+          onDrop={(e) => handleDropOnTeam(e, 'guest')}
         >
           <div className="team-panel__header">
             <div className="team-panel__title">
