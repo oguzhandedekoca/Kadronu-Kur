@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Typography, Badge, Empty, message, Progress } from 'antd';
+import { Typography, Badge, Empty, message, Progress, Spin } from 'antd';
 import { useGame } from '../context/GameContext';
 import PlayerCard from './PlayerCard';
 
@@ -9,6 +9,7 @@ export default function DraftView() {
   const { gameState, role, pickPlayer } = useGame();
   const [dragOverHost, setDragOverHost] = useState(false);
   const [dragOverGuest, setDragOverGuest] = useState(false);
+  const [picking, setPicking] = useState(false);
 
   if (!gameState) return null;
 
@@ -33,10 +34,13 @@ export default function DraftView() {
       message.warning('Bu oyuncu zaten seçildi.');
       return;
     }
+    setPicking(true);
     try {
       await pickPlayer(playerId);
     } catch {
       message.error('Seçim yapılamadı!');
+    } finally {
+      setPicking(false);
     }
   };
 
@@ -51,7 +55,7 @@ export default function DraftView() {
   const handleDropOnTeam = (e: React.DragEvent, teamRole: 'host' | 'guest') => {
     e.preventDefault();
     handleDropEnd(teamRole);
-    if (!isMyTurn || role !== teamRole) return;
+    if (picking || !isMyTurn || role !== teamRole) return;
     const playerId = e.dataTransfer.getData(DRAG_KEY);
     if (!playerId) return;
     handlePick(playerId);
@@ -90,16 +94,22 @@ export default function DraftView() {
 
       {/* Turn banner */}
       <div
-        className={`turn-banner turn-banner--${gameState.currentTurn} ${isMyTurn ? 'turn-banner--mine' : ''}`}
+        className={`turn-banner turn-banner--${gameState.currentTurn} ${isMyTurn ? 'turn-banner--mine' : ''} ${picking ? 'turn-banner--picking' : ''}`}
       >
         <div className="turn-banner__content">
-          <span className="turn-banner__icon">
-            {gameState.currentTurn === 'host' ? '🟢' : '🔵'}
-          </span>
+          {picking ? (
+            <Spin size="small" style={{ marginRight: 12 }} />
+          ) : (
+            <span className="turn-banner__icon">
+              {gameState.currentTurn === 'host' ? '🟢' : '🔵'}
+            </span>
+          )}
           <Title level={3} style={{ margin: 0, color: '#fff' }}>
-            {isMyTurn
-              ? 'Senin sıran! Bir oyuncu seç.'
-              : `${currentName} seçiyor...`}
+            {picking
+              ? 'Seçim yapılıyor...'
+              : isMyTurn
+                ? 'Senin sıran! Bir oyuncu seç.'
+                : `${currentName} seçiyor...`}
           </Title>
         </div>
         <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
@@ -156,17 +166,19 @@ export default function DraftView() {
               image={Empty.PRESENTED_IMAGE_SIMPLE}
             />
           ) : (
-            <div className="draft-pool__grid">
+            <div
+              className={`draft-pool__grid ${picking ? 'draft-pool__grid--busy' : ''}`}
+            >
               {gameState.players.map((p) => (
                 <div
                   key={p.id}
-                  className={`draft-pool__card-wrap ${isMyTurn ? 'draft-pool__card-wrap--draggable' : ''}`}
-                  draggable={isMyTurn}
+                  className={`draft-pool__card-wrap ${isMyTurn && !picking ? 'draft-pool__card-wrap--draggable' : ''}`}
+                  draggable={isMyTurn && !picking}
                   onDragStart={(e) => handleDragStart(e, p.id)}
                 >
                   <PlayerCard
                     player={p}
-                    selectable={isMyTurn}
+                    selectable={isMyTurn && !picking}
                     onClick={() => handlePick(p.id)}
                   />
                 </div>

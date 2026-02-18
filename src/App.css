@@ -648,6 +648,10 @@
 .draft-pool__card-wrap--draggable:active {
   cursor: grabbing;
 }
+.draft-pool__grid--busy {
+  pointer-events: none;
+  opacity: 0.75;
+}
 .team-panel--drop-target {
   min-height: 120px;
   border: 2px dashed transparent;
