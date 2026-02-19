@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Steps,
   Typography,
@@ -10,7 +10,7 @@ import {
   Card,
   Space,
   message,
-} from 'antd';
+} from "antd";
 import {
   TeamOutlined,
   ThunderboltOutlined,
@@ -18,13 +18,13 @@ import {
   TrophyOutlined,
   LoginOutlined,
   LoadingOutlined,
-} from '@ant-design/icons';
-import { useGame } from '../context/GameContext';
-import { clearJoinRequest } from '../firebase/roomService';
-import LobbyView from '../components/LobbyView';
-import DiceRollView from '../components/DiceRollView';
-import DraftView from '../components/DraftView';
-import ResultView from '../components/ResultView';
+} from "@ant-design/icons";
+import { useGame } from "../context/GameContext";
+import { clearJoinRequest } from "../firebase/roomService";
+import LobbyView from "../components/LobbyView";
+import DiceRollView from "../components/DiceRollView";
+import DraftView from "../components/DraftView";
+import ResultView from "../components/ResultView";
 
 const { Title, Text } = Typography;
 
@@ -40,7 +40,7 @@ export default function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
   const { gameState, loading, subscribeToRoom, role, joinRoom } = useGame();
-  const [guestName, setGuestName] = useState('');
+  const [guestName, setGuestName] = useState("");
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
@@ -51,16 +51,15 @@ export default function RoomPage() {
   }, [roomId]);
 
   useEffect(() => {
-    document.title = roomId ? `Oda ${roomId} - Kadronu Kur` : 'Kadronu Kur';
+    document.title = roomId ? `Oda ${roomId} - Kadronu Kur` : "Kadronu Kur";
     return () => {
-      document.title = 'Kadronu Kur';
+      document.title = "Kadronu Kur";
     };
   }, [roomId]);
 
   // --- Detect pending join-request approval ---
   const isPending =
-    roomId != null &&
-    sessionStorage.getItem(`kk-${roomId}-pending`) === 'true';
+    roomId != null && sessionStorage.getItem(`kk-${roomId}-pending`) === "true";
 
   // If approved (role got set via subscription), clear pending flag
   useEffect(() => {
@@ -90,7 +89,7 @@ export default function RoomPage() {
           title="Oda bulunamadı"
           subTitle={`"${roomId}" kodlu bir oda bulunamadı.`}
           extra={
-            <Button type="primary" onClick={() => navigate('/')}>
+            <Button type="primary" onClick={() => navigate("/")}>
               Ana Sayfaya Dön
             </Button>
           }
@@ -104,7 +103,7 @@ export default function RoomPage() {
     const myPid = sessionStorage.getItem(`kk-${roomId}-pid`);
     const wasDenied =
       gameState.joinRequest?.id === myPid &&
-      gameState.joinRequest?.status === 'denied';
+      gameState.joinRequest?.status === "denied";
 
     if (wasDenied) {
       return (
@@ -123,7 +122,7 @@ export default function RoomPage() {
                     sessionStorage.removeItem(`kk-${roomId}-name`);
                     sessionStorage.removeItem(`kk-${roomId}-pending`);
                   }
-                  navigate('/');
+                  navigate("/");
                 }}
               >
                 Ana Sayfaya Dön
@@ -136,9 +135,12 @@ export default function RoomPage() {
 
     return (
       <div className="center-screen">
-        <Card className="glass-card" style={{ maxWidth: 400, textAlign: 'center' }}>
+        <Card
+          className="glass-card"
+          style={{ maxWidth: 400, textAlign: "center" }}
+        >
           <Space direction="vertical" size="large" align="center">
-            <LoadingOutlined style={{ fontSize: 40, color: '#52c41a' }} />
+            <LoadingOutlined style={{ fontSize: 40, color: "#52c41a" }} />
             <Title level={4} style={{ margin: 0 }}>
               İstek Gönderildi
             </Title>
@@ -155,15 +157,15 @@ export default function RoomPage() {
   if (!role && !gameState.guest) {
     const handleJoin = async () => {
       if (!guestName.trim() || !roomId) {
-        message.warning('Adını gir!');
+        message.warning("Adını gir!");
         return;
       }
       setBusy(true);
       try {
         const ok = await joinRoom(roomId, guestName.trim());
-        if (!ok) message.error('Odaya katılınamadı!');
+        if (!ok) message.error("Odaya katılınamadı!");
       } catch {
-        message.error('Bağlantı hatası!');
+        message.error("Bağlantı hatası!");
       } finally {
         setBusy(false);
       }
@@ -180,9 +182,9 @@ export default function RoomPage() {
             <Text type="secondary">{gameState.host.name} seni bekliyor!</Text>
           </div>
           <Card className="glass-card home-card">
-            <Space direction="vertical" size="large" style={{ width: '100%' }}>
+            <Space direction="vertical" size="large" style={{ width: "100%" }}>
               <div>
-                <Text strong style={{ display: 'block', marginBottom: 8 }}>
+                <Text strong style={{ display: "block", marginBottom: 8 }}>
                   İsmin
                 </Text>
                 <Input
@@ -191,7 +193,7 @@ export default function RoomPage() {
                   prefix={<TeamOutlined />}
                   value={guestName}
                   onChange={(e) => setGuestName(e.target.value)}
-                  maxLength={20}
+                  maxLength={50}
                   onPressEnter={handleJoin}
                   disabled={busy}
                 />
@@ -223,7 +225,7 @@ export default function RoomPage() {
           title="Oda dolu"
           subTitle="Bu odada zaten iki oyuncu var."
           extra={
-            <Button type="primary" onClick={() => navigate('/')}>
+            <Button type="primary" onClick={() => navigate("/")}>
               Ana Sayfaya Dön
             </Button>
           }
@@ -237,14 +239,14 @@ export default function RoomPage() {
 
   const renderView = () => {
     switch (gameState.status) {
-      case 'waiting':
-      case 'adding_players':
+      case "waiting":
+      case "adding_players":
         return <LobbyView />;
-      case 'rolling':
+      case "rolling":
         return <DiceRollView />;
-      case 'drafting':
+      case "drafting":
         return <DraftView />;
-      case 'completed':
+      case "completed":
         return <ResultView />;
       default:
         return <LobbyView />;
@@ -263,10 +265,10 @@ export default function RoomPage() {
           current={step}
           size="small"
           items={[
-            { title: 'Lobi', icon: <TeamOutlined /> },
-            { title: 'Zar Atışı', icon: <ThunderboltOutlined /> },
-            { title: 'Kadro Seçimi', icon: <SolutionOutlined /> },
-            { title: 'Tamamlandı', icon: <TrophyOutlined /> },
+            { title: "Lobi", icon: <TeamOutlined /> },
+            { title: "Zar Atışı", icon: <ThunderboltOutlined /> },
+            { title: "Kadro Seçimi", icon: <SolutionOutlined /> },
+            { title: "Tamamlandı", icon: <TrophyOutlined /> },
           ]}
         />
       </div>

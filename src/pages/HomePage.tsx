@@ -107,7 +107,7 @@ export default function HomePage() {
                 prefix={<TeamOutlined />}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                maxLength={20}
+                maxLength={50}
                 onPressEnter={handleCreate}
                 disabled={busy}
               />
