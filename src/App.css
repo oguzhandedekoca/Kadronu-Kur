@@ -973,6 +973,89 @@
 }
 
 /* ================================================
+   WATCH MATCHES (Apple Watch → Realtime DB)
+   ================================================ */
+.watch-matches {
+  padding: 8px 0;
+}
+.watch-matches--loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 180px;
+}
+.watch-matches__list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.watch-match-card {
+  padding: 0 !important;
+}
+.watch-match-card .ant-card-body {
+  padding: 14px 16px;
+}
+.watch-match-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 6px;
+}
+.watch-match-card__team {
+  font-size: 15px;
+  flex: 1;
+  text-align: center;
+}
+.watch-match-card__team:last-child {
+  text-align: right;
+}
+.watch-match-card__team:first-child {
+  text-align: left;
+}
+.watch-match-card__score {
+  font-size: 18px;
+  font-weight: 700;
+  color: #52c41a;
+  min-width: 60px;
+  text-align: center;
+}
+.watch-match-card__meta {
+  margin-bottom: 4px;
+}
+.watch-match-card__goals {
+  padding-top: 6px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+.watch-match-card:hover {
+  border-color: rgba(82, 196, 26, 0.25) !important;
+  box-shadow: 0 0 12px rgba(82, 196, 26, 0.06);
+}
+
+.watch-match-modal__header {
+  margin-bottom: 12px;
+}
+.watch-match-modal__score {
+  color: #52c41a;
+}
+.watch-match-modal__goals-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.watch-match-modal__goal-minute {
+  display: inline-block;
+  min-width: 40px;
+  color: rgba(255, 255, 255, 0.65);
+}
+.watch-match-modal__goal-team {
+  font-weight: 600;
+}
+
+/* ================================================
    HOME TABS
    ================================================ */
 .home-tabs {

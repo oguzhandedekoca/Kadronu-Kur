@@ -16,10 +16,12 @@ import {
   TeamOutlined,
   GlobalOutlined,
   TrophyOutlined,
+  AppleOutlined,
 } from "@ant-design/icons";
 import { useGame } from "../context/GameContext";
 import PublicRooms from "../components/PublicRooms";
 import SavedSquads from "../components/SavedSquads";
+import WatchMatches from "../components/WatchMatches";
 
 const { Title, Text } = Typography;
 
@@ -193,12 +195,22 @@ export default function HomePage() {
                 ),
                 children: <SavedSquads />,
               },
+              {
+                key: "watch",
+                label: (
+                  <span>
+                    <AppleOutlined /> Oynanan Maçlar
+                  </span>
+                ),
+                children: <WatchMatches />,
+              },
             ]}
           />
         </div>
 
         <Text className="home-footer">
-          Halısaha & spor karşılaşmaları için kadro seçim uygulaması
+          Halısaha & spor karşılaşmaları için kadro seçim ve maç izleme
+          uygulaması
         </Text>
       </div>
     </main>
