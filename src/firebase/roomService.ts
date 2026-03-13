@@ -169,16 +169,26 @@ export async function startDraft(roomId: string): Promise<void> {
     const snap = await tx.get(ref);
     if (!snap.exists()) return;
     const data = snap.data() as GameState;
+    const hostTeamMember = { id: data.host.id, name: data.host.name, position: '' };
+    const guestTeamMember = {
+      id: data.guest?.id ?? '',
+      name: data.guest?.name ?? '',
+      position: '',
+    };
+
+    const hostLower = data.host.name.toLocaleLowerCase('tr-TR').trim();
+    const guestLower = data.guest?.name?.toLocaleLowerCase('tr-TR').trim() ?? '';
+
+    const newPlayers = (data.players || []).filter((p: PlayerInfo) => {
+      const pLower = p.name.toLocaleLowerCase('tr-TR').trim();
+      return pLower !== hostLower && pLower !== guestLower;
+    });
+
     tx.update(ref, {
       status: 'drafting',
-      hostTeam: [{ id: data.host.id, name: data.host.name, position: '' }],
-      guestTeam: [
-        {
-          id: data.guest?.id ?? '',
-          name: data.guest?.name ?? '',
-          position: '',
-        },
-      ],
+      hostTeam: [hostTeamMember],
+      guestTeam: [guestTeamMember],
+      players: newPlayers
     });
   });
 }

@@ -20,8 +20,16 @@ export default function DraftView() {
       ? gameState.host.name
       : gameState.guest?.name;
 
+  const hostLower = gameState.host.name.toLocaleLowerCase('tr-TR').trim();
+  const guestLower = gameState.guest?.name?.toLocaleLowerCase('tr-TR').trim() || '';
+
+  const poolPlayers = gameState.players.filter((p) => {
+    const pName = p.name.toLocaleLowerCase('tr-TR').trim();
+    return pName !== hostLower && pName !== guestLower;
+  });
+
   const totalPicked = gameState.hostTeam.length + gameState.guestTeam.length;
-  const totalPlayers = totalPicked + gameState.players.length;
+  const totalPlayers = totalPicked + poolPlayers.length;
   const progress = totalPlayers > 0 ? (totalPicked / totalPlayers) * 100 : 0;
 
   const handlePick = async (playerId: string) => {
@@ -29,9 +37,9 @@ export default function DraftView() {
       message.warning('Sıra sende değil!');
       return;
     }
-    const stillInPool = gameState.players.some((p) => p.id === playerId);
+    const stillInPool = poolPlayers.some((p) => p.id === playerId);
     if (!stillInPool) {
-      message.warning('Bu oyuncu zaten seçildi.');
+      message.warning('Bu oyuncu zaten seçildi veya havuzda değil.');
       return;
     }
     setPicking(true);
@@ -160,7 +168,7 @@ export default function DraftView() {
           >
             Oyuncu Havuzu
           </Title>
-          {gameState.players.length === 0 ? (
+          {poolPlayers.length === 0 ? (
             <Empty
               description="Tüm oyuncular seçildi!"
               image={Empty.PRESENTED_IMAGE_SIMPLE}
@@ -169,7 +177,7 @@ export default function DraftView() {
             <div
               className={`draft-pool__grid ${picking ? 'draft-pool__grid--busy' : ''}`}
             >
-              {gameState.players.map((p) => (
+              {poolPlayers.map((p) => (
                 <div
                   key={p.id}
                   className={`draft-pool__card-wrap ${isMyTurn && !picking ? 'draft-pool__card-wrap--draggable' : ''}`}

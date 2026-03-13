@@ -62,7 +62,11 @@ export default function LobbyView() {
     if (!justEnteredLobby) return;
 
     (async () => {
+      const hostLower = gameState.host.name.toLocaleLowerCase('tr-TR').trim();
+      const guestLower = gameState.guest?.name?.toLocaleLowerCase('tr-TR').trim() || '';
       for (const name of PLAYER_NAMES) {
+        const nmLower = name.toLocaleLowerCase('tr-TR').trim();
+        if (nmLower === hostLower || nmLower === guestLower) continue;
         await addPlayer(name, "");
       }
     })();
@@ -84,7 +88,15 @@ export default function LobbyView() {
       message.warning("Oyuncu seç veya isim yazıp listeden ekle!");
       return;
     }
-    if (gameState.players.some((p) => p.name === nameToAdd)) {
+    const nameToAddLower = nameToAdd.toLocaleLowerCase('tr-TR').trim();
+    const hostLower = gameState.host.name.toLocaleLowerCase('tr-TR').trim();
+    const guestLower = gameState.guest?.name?.toLocaleLowerCase('tr-TR').trim() || '';
+    
+    if (nameToAddLower === hostLower || nameToAddLower === guestLower) {
+      message.warning("Kendinizi veya rakibinizi kadroya doğrudan dahil edemezsiniz.");
+      return;
+    }
+    if (gameState.players.some((p) => p.name.toLocaleLowerCase('tr-TR').trim() === nameToAddLower)) {
       message.warning("Bu isim zaten listede.");
       return;
     }
@@ -126,8 +138,16 @@ export default function LobbyView() {
   };
 
   const handleAddAll = async () => {
+    const hostLower = gameState.host.name.toLocaleLowerCase('tr-TR').trim();
+    const guestLower = gameState.guest?.name?.toLocaleLowerCase('tr-TR').trim() || '';
+    
     const toAdd = PLAYER_NAMES.filter(
-      (name) => !gameState.players.some((p) => p.name === name),
+      (name) => {
+        const nameLower = name.toLocaleLowerCase('tr-TR').trim();
+        return !gameState.players.some((p) => p.name.toLocaleLowerCase('tr-TR').trim() === nameLower) && 
+               nameLower !== hostLower && 
+               nameLower !== guestLower;
+      }
     );
     if (toAdd.length === 0) {
       message.info("Zaten hepsi listede.");
@@ -164,20 +184,29 @@ export default function LobbyView() {
 
   const canProceed = gameState.guest && gameState.players.length >= 2;
 
-  const addedNames = new Set(gameState.players.map((p) => p.name));
+  const addedNamesLower = new Set(gameState.players.map((p) => p.name.toLocaleLowerCase('tr-TR').trim()));
+  const hostLowerOptions = gameState.host.name.toLocaleLowerCase('tr-TR').trim();
+  const guestLowerOptions = gameState.guest?.name?.toLocaleLowerCase('tr-TR').trim() || '';
+
   const basePlayerOptions = PLAYER_NAMES.filter(
-    (name) => !addedNames.has(name),
+    (name) => {
+        const nameLower = name.toLocaleLowerCase('tr-TR').trim();
+        return !addedNamesLower.has(nameLower) && nameLower !== hostLowerOptions && nameLower !== guestLowerOptions;
+    }
   ).map((name) => ({ value: name, label: name }));
-  const search = searchValue.trim().toLowerCase();
+  const search = searchValue.trim().toLocaleLowerCase('tr-TR');
   const playerOptions = search
     ? basePlayerOptions.filter((opt) =>
-        (opt.label as string).toLowerCase().includes(search),
+        (opt.label as string).toLocaleLowerCase('tr-TR').includes(search),
       )
     : basePlayerOptions;
+  const searchValueLower = searchValue.trim().toLocaleLowerCase('tr-TR');
   const customOption =
     search &&
-    !addedNames.has(searchValue.trim()) &&
-    !basePlayerOptions.some((o) => o.value === searchValue.trim())
+    !addedNamesLower.has(searchValueLower) &&
+    !basePlayerOptions.some((o) => o.value.toLocaleLowerCase('tr-TR').trim() === searchValueLower) &&
+    searchValueLower !== hostLowerOptions &&
+    searchValueLower !== guestLowerOptions
       ? [{ value: searchValue.trim(), label: `"${searchValue.trim()}" ekle` }]
       : [];
   const allPlayerOptions = [...playerOptions, ...customOption];
