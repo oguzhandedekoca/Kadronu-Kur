@@ -10,6 +10,8 @@ import {
   Card,
   Space,
   message,
+  Popconfirm,
+  Tooltip,
 } from "antd";
 import {
   TeamOutlined,
@@ -18,6 +20,7 @@ import {
   TrophyOutlined,
   LoginOutlined,
   LoadingOutlined,
+  LogoutOutlined,
 } from "@ant-design/icons";
 import { useGame } from "../context/GameContext";
 import { clearJoinRequest } from "../firebase/roomService";
@@ -39,7 +42,7 @@ const STATUS_STEP: Record<string, number> = {
 export default function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { gameState, loading, subscribeToRoom, role, joinRoom } = useGame();
+  const { gameState, loading, subscribeToRoom, role, joinRoom, resetGame } = useGame();
   const [guestName, setGuestName] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -253,12 +256,42 @@ export default function RoomPage() {
     }
   };
 
+  const handleLeave = () => {
+    if (roomId) {
+      sessionStorage.removeItem(`kk-${roomId}-pid`);
+      sessionStorage.removeItem(`kk-${roomId}-name`);
+      sessionStorage.removeItem(`kk-${roomId}-pending`);
+    }
+    resetGame();
+    navigate("/");
+  };
+
   return (
     <main id="main-content" className="room-page">
       <header className="room-header">
         <Title level={4} style={{ margin: 0 }}>
           ⚽ Kadronu Kur
         </Title>
+        <Tooltip title="Odadan çık">
+          <Popconfirm
+            title="Odadan çıkmak istediğine emin misin?"
+            okText="Çık"
+            cancelText="İptal"
+            okButtonProps={{ danger: true }}
+            onConfirm={handleLeave}
+            placement="bottomRight"
+          >
+            <Button
+              icon={<LogoutOutlined />}
+              size="small"
+              danger
+              type="text"
+              style={{ color: "rgba(255,255,255,0.45)" }}
+            >
+              Çıkış
+            </Button>
+          </Popconfirm>
+        </Tooltip>
       </header>
       <div className="game-steps">
         <Steps
