@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   Steps,
@@ -10,8 +10,7 @@ import {
   Card,
   Space,
   message,
-  Popconfirm,
-  Tooltip,
+  Modal,
 } from "antd";
 import {
   TeamOutlined,
@@ -21,9 +20,13 @@ import {
   LoginOutlined,
   LoadingOutlined,
   LogoutOutlined,
+  ExclamationCircleOutlined,
 } from "@ant-design/icons";
 import { useGame } from "../context/GameContext";
-import { clearJoinRequest } from "../firebase/roomService";
+import {
+  clearJoinRequest,
+  notifyPlayerLeft,
+} from "../firebase/roomService";
 import LobbyView from "../components/LobbyView";
 import DiceRollView from "../components/DiceRollView";
 import DraftView from "../components/DraftView";
@@ -42,9 +45,12 @@ const STATUS_STEP: Record<string, number> = {
 export default function RoomPage() {
   const { roomId } = useParams<{ roomId: string }>();
   const navigate = useNavigate();
-  const { gameState, loading, subscribeToRoom, role, joinRoom, resetGame } = useGame();
+  const { gameState, loading, subscribeToRoom, role, joinRoom, resetGame } =
+    useGame();
   const [guestName, setGuestName] = useState("");
   const [busy, setBusy] = useState(false);
+  // Karşı tarafın çıkış bildirimini yalnızca bir kez göster
+  const partnerLeftHandled = useRef(false);
 
   useEffect(() => {
     if (!roomId) return;
@@ -62,14 +68,52 @@ export default function RoomPage() {
 
   // --- Detect pending join-request approval ---
   const isPending =
-    roomId != null && sessionStorage.getItem(`kk-${roomId}-pending`) === "true";
+    roomId != null &&
+    sessionStorage.getItem(`kk-${roomId}-pending`) === "true";
 
-  // If approved (role got set via subscription), clear pending flag
   useEffect(() => {
     if (isPending && role && roomId) {
       sessionStorage.removeItem(`kk-${roomId}-pending`);
     }
   }, [isPending, role, roomId]);
+
+  // --- Karşı oyuncu çıkışını izle ---
+  useEffect(() => {
+    if (!gameState?.playerLeft || !role || partnerLeftHandled.current) return;
+
+    // Kendi çıkışımızı değil, karşı tarafın çıkışını izliyoruz
+    const leaverRole = gameState.playerLeft.role;
+    const leaverName = gameState.playerLeft.name;
+    if (leaverRole === role) return; // bu biziz, görmezden gel
+
+    partnerLeftHandled.current = true;
+
+    Modal.warning({
+      title: "Oyuncu Ayrıldı",
+      icon: <ExclamationCircleOutlined />,
+      content: `${leaverName} odadan ayrıldı. Ana sayfaya yönlendiriliyorsunuz.`,
+      okText: "Tamam",
+      centered: true,
+      onOk: () => {
+        if (roomId) {
+          sessionStorage.removeItem(`kk-${roomId}-pid`);
+          sessionStorage.removeItem(`kk-${roomId}-name`);
+          sessionStorage.removeItem(`kk-${roomId}-pending`);
+        }
+        resetGame();
+        navigate("/");
+      },
+      afterClose: () => {
+        if (roomId) {
+          sessionStorage.removeItem(`kk-${roomId}-pid`);
+          sessionStorage.removeItem(`kk-${roomId}-name`);
+          sessionStorage.removeItem(`kk-${roomId}-pending`);
+        }
+        resetGame();
+        navigate("/");
+      },
+    });
+  }, [gameState?.playerLeft, role, roomId, resetGame, navigate]);
 
   /* ---- Loading ---- */
   if (loading) {
@@ -148,7 +192,8 @@ export default function RoomPage() {
               İstek Gönderildi
             </Title>
             <Text type="secondary">
-              {gameState.host.name} katılma isteğini onaylamasını bekliyorsun...
+              {gameState.host.name} katılma isteğini onaylamasını
+              bekliyorsun...
             </Text>
           </Space>
         </Card>
@@ -256,8 +301,11 @@ export default function RoomPage() {
     }
   };
 
-  const handleLeave = () => {
-    if (roomId) {
+  const handleLeave = async () => {
+    if (roomId && role && gameState) {
+      const leaverName =
+        role === "host" ? gameState.host.name : gameState.guest?.name ?? "";
+      await notifyPlayerLeft(roomId, leaverName, role);
       sessionStorage.removeItem(`kk-${roomId}-pid`);
       sessionStorage.removeItem(`kk-${roomId}-name`);
       sessionStorage.removeItem(`kk-${roomId}-pending`);
@@ -272,26 +320,16 @@ export default function RoomPage() {
         <Title level={4} style={{ margin: 0 }}>
           ⚽ Kadronu Kur
         </Title>
-        <Tooltip title="Odadan çık">
-          <Popconfirm
-            title="Odadan çıkmak istediğine emin misin?"
-            okText="Çık"
-            cancelText="İptal"
-            okButtonProps={{ danger: true }}
-            onConfirm={handleLeave}
-            placement="bottomRight"
-          >
-            <Button
-              icon={<LogoutOutlined />}
-              size="small"
-              danger
-              type="text"
-              style={{ color: "rgba(255,255,255,0.45)" }}
-            >
-              Çıkış
-            </Button>
-          </Popconfirm>
-        </Tooltip>
+        <Button
+          icon={<LogoutOutlined />}
+          size="small"
+          danger
+          type="text"
+          onClick={handleLeave}
+          style={{ color: "rgba(255,255,255,0.45)" }}
+        >
+          Çıkış
+        </Button>
       </header>
       <div className="game-steps">
         <Steps

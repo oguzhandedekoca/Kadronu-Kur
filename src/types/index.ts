@@ -40,6 +40,7 @@ export interface GameState {
   guestTeam: PlayerInfo[];
   joinRequest?: JoinRequest | null;
   squadSaved?: boolean;
+  playerLeft?: { name: string; role: PlayerRole } | null;
 }
 
 export interface SavedSquad {

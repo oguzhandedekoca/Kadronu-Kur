@@ -235,6 +235,18 @@ export async function clearJoinRequest(roomId: string): Promise<void> {
   await updateDoc(roomRef(roomId), { joinRequest: null });
 }
 
+export async function notifyPlayerLeft(
+  roomId: string,
+  name: string,
+  role: PlayerRole,
+): Promise<void> {
+  await updateDoc(roomRef(roomId), { playerLeft: { name, role } });
+}
+
+export async function clearPlayerLeft(roomId: string): Promise<void> {
+  await updateDoc(roomRef(roomId), { playerLeft: null });
+}
+
 // --------------- Public rooms ---------------
 
 export function subscribeToPublicRooms(
