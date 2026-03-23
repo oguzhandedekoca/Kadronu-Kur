@@ -2,12 +2,25 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, Typography, Button, Empty, Space, message, Tag, Popconfirm } from 'antd';
 import { UserOutlined, LoginOutlined, DeleteOutlined } from '@ant-design/icons';
-import { subscribeToPublicRooms, sendJoinRequest, deleteRoom } from '../firebase/roomService';
+import {
+  subscribeToPublicRooms,
+  subscribeToAllRooms,
+  sendJoinRequest,
+  deleteRoom,
+} from '../firebase/roomService';
 import type { GameState } from '../types';
 
 const { Text } = Typography;
 
 const ADMIN_NAME = 'OguzhanDedekoca';
+
+const STATUS_LABELS: Record<string, { label: string; color: string }> = {
+  waiting:        { label: 'Bekliyor',     color: 'green'  },
+  adding_players: { label: 'Oyuncu Ekleme', color: 'blue'  },
+  rolling:        { label: 'Zar Atışı',    color: 'orange' },
+  drafting:       { label: 'Seçim',        color: 'purple' },
+  completed:      { label: 'Tamamlandı',   color: 'default' },
+};
 
 interface Props {
   playerName: string;
@@ -21,9 +34,12 @@ export default function PublicRooms({ playerName }: Props) {
   const isAdmin = playerName.trim() === ADMIN_NAME;
 
   useEffect(() => {
-    const unsub = subscribeToPublicRooms(setRooms);
+    // Admin tüm odaları görür; normal kullanıcı yalnızca katılabileceklerini
+    const unsub = isAdmin
+      ? subscribeToAllRooms(setRooms)
+      : subscribeToPublicRooms(setRooms);
     return () => unsub();
-  }, []);
+  }, [isAdmin]);
 
   const handleJoin = async (room: GameState) => {
     if (!playerName.trim()) {
@@ -66,7 +82,7 @@ export default function PublicRooms({ playerName }: Props) {
   if (rooms.length === 0) {
     return (
       <Empty
-        description="Şu an açık oda yok"
+        description={isAdmin ? 'Hiç oda yok' : 'Şu an açık oda yok'}
         image={Empty.PRESENTED_IMAGE_SIMPLE}
       />
     );
@@ -74,52 +90,65 @@ export default function PublicRooms({ playerName }: Props) {
 
   return (
     <div className="public-rooms">
-      {rooms.map((room) => (
-        <Card key={room.roomId} className="glass-card public-room-card">
-          <div className="public-room-card__inner">
-            <div className="public-room-card__info">
+      {rooms.map((room) => {
+        const statusInfo = STATUS_LABELS[room.status] ?? { label: room.status, color: 'default' };
+        const canJoin = room.status === 'waiting' && !room.guest;
+
+        return (
+          <Card key={room.roomId} className="glass-card public-room-card">
+            <div className="public-room-card__inner">
+              <div className="public-room-card__info">
+                <Space>
+                  <UserOutlined />
+                  <Text strong>{room.host.name}</Text>
+                  <Tag color="green">Ev Sahibi</Tag>
+                  {isAdmin && (
+                    <Tag color={statusInfo.color}>{statusInfo.label}</Tag>
+                  )}
+                </Space>
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  Kod: {room.roomId}
+                  {isAdmin && room.guest && (
+                    <> &nbsp;·&nbsp; Misafir: <strong>{room.guest.name}</strong></>
+                  )}
+                </Text>
+              </div>
               <Space>
-                <UserOutlined />
-                <Text strong>{room.host.name}</Text>
-                <Tag color="green">Ev Sahibi</Tag>
-              </Space>
-              <Text type="secondary" style={{ fontSize: 12 }}>
-                Kod: {room.roomId}
-              </Text>
-            </div>
-            <Space>
-              <Button
-                type="primary"
-                icon={<LoginOutlined />}
-                onClick={() => handleJoin(room)}
-                loading={busy === room.roomId}
-                size="small"
-              >
-                Katıl
-              </Button>
-              {isAdmin && (
-                <Popconfirm
-                  title="Odayı sil"
-                  description="Bu oda kalıcı olarak silinecek. Emin misin?"
-                  onConfirm={() => handleDelete(room.roomId)}
-                  okText="Sil"
-                  cancelText="İptal"
-                  okButtonProps={{ danger: true }}
-                >
+                {canJoin && (
                   <Button
-                    danger
-                    icon={<DeleteOutlined />}
-                    loading={deleting === room.roomId}
+                    type="primary"
+                    icon={<LoginOutlined />}
+                    onClick={() => handleJoin(room)}
+                    loading={busy === room.roomId}
                     size="small"
                   >
-                    Sil
+                    Katıl
                   </Button>
-                </Popconfirm>
-              )}
-            </Space>
-          </div>
-        </Card>
-      ))}
+                )}
+                {isAdmin && (
+                  <Popconfirm
+                    title="Odayı sil"
+                    description="Bu oda kalıcı olarak silinecek. Emin misin?"
+                    onConfirm={() => handleDelete(room.roomId)}
+                    okText="Sil"
+                    cancelText="İptal"
+                    okButtonProps={{ danger: true }}
+                  >
+                    <Button
+                      danger
+                      icon={<DeleteOutlined />}
+                      loading={deleting === room.roomId}
+                      size="small"
+                    >
+                      Sil
+                    </Button>
+                  </Popconfirm>
+                )}
+              </Space>
+            </div>
+          </Card>
+        );
+      })}
     </div>
   );
 }

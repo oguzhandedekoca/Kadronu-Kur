@@ -264,6 +264,16 @@ export function subscribeToPublicRooms(
   });
 }
 
+/** Admin only: subscribe to ALL rooms regardless of status */
+export function subscribeToAllRooms(
+  callback: (rooms: GameState[]) => void,
+): () => void {
+  return onSnapshot(collection(db, 'rooms'), (snap) => {
+    const rooms = snap.docs.map((d) => d.data() as GameState);
+    callback(rooms);
+  });
+}
+
 // --------------- Squad saving ---------------
 
 export async function markSquadSaved(roomId: string): Promise<void> {
